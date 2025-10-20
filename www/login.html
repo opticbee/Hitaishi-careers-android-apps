@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Hitaishi Careers</title>
+
+  <link rel="icon" href="https://winjob.in/images/favicon.ico" type="image/x-icon">
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  
+  <style>
+    :root {
+      --primary-color: #6a0dad;
+      --secondary-color: #d653c9;
+      --light-gray: #f8f9fa;
+      --dark-text: #333333;
+      --google-blue: #4285f4; 
+    }
+    
+    body {
+      background-color: var(--light-gray);
+      font-family: 'Poppins', sans-serif;
+      /* Increased padding-top to give space for the fixed back arrow/logo */
+      padding-top: 80px; 
+    }
+    
+    .login-container {
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start; /* Align to the top of the viewport minus padding */
+      justify-content: center;
+      padding-top: 30px; /* Extra padding for mobile centering below the header */
+    }
+
+    .login-card {
+      border: none;
+      border-radius: 1rem;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      width: 100%;
+      max-width: 450px; /* Max width for the centered form */
+    }
+    
+    .form-section {
+      padding: 2rem;
+      background-color: white;
+      border-radius: 1rem;
+    }
+
+    .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.25rem rgba(106, 13, 173, 0.25);
+    }
+
+    .btn-primary {
+      background-color: var(--primary-color);
+      border-color: var(--primary-color);
+      padding: 0.75rem;
+      font-weight: 600;
+    }
+
+    .btn-primary:hover {
+      background-color: #5a0a9d;
+      border-color: #5a0a9d;
+    }
+
+    /* Style for the Google Sign-In button using a standard button */
+    .btn-google {
+        border: 1px solid #ddd;
+        font-weight: 600;
+        background-color: white;
+        color: var(--dark-text);
+        padding: 0.75rem;
+        transition: background-color 0.2s;
+    }
+    .btn-google:hover {
+        background-color: #f1f1f1;
+        border-color: #ccc;
+    }
+
+    .password-toggle {
+        cursor: pointer;
+    }
+    
+    /* --- HEADER BAR STYLES --- */
+    #mobile-header-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000; 
+      /* 35px margin top + 15px padding bottom = 50px total height + body padding */
+      padding: 35px 15px 15px 15px; 
+      display: flex;
+      align-items: center;
+      background-color: var(--light-gray); /* Match body background */
+    }
+
+    #back-button {
+      background: none;
+      border: none;
+      color: var(--dark-text);
+      font-size: 1.5rem;
+      padding: 0;
+      margin-right: 10px;
+      cursor: pointer;
+    }
+
+    #header-logo-title .fw-bold {
+        color: var(--dark-text);
+        font-size: 1.25rem;
+    }
+    /* --- END HEADER BAR STYLES --- */
+    
+    .validation-error {
+        color: #dc3545;
+        font-size: 0.875rem;
+        margin-top: 5px;
+        display: none;
+    }
+    
+    .validation-success {
+        color: #198754;
+        font-size: 0.875rem;
+        margin-top: 5px;
+        display: none;
+    }
+
+    /* Remove unused styles for form sections for a cleaner look */
+    @media (max-width: 991.98px) {
+        .login-container {
+            align-items: center;
+        }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ========================================================== -->
+  <!-- MOBILE-FRIENDLY HEADER BAR -->
+  <!-- ========================================================== -->
+  <div id="mobile-header-bar">
+      <!-- Left Arrow Button for back navigation -->
+      <button id="back-button" onclick="history.back()">
+          <i class="fas fa-arrow-left"></i>
+      </button>
+      <!-- Logo and Title -->
+      <div id="header-logo-title" class="d-flex align-items-center">
+          <img src="images/logo.png" alt="Hitaishi Careers Logo" height="30" class="me-2">
+          <span class="fw-bold">Hitaishi Careers</span>
+      </div>
+  </div>
+
+
+  <div class="container login-container">
+    <div class="login-card">
+      <div class="row g-0 justify-content-center">
+        <!-- Login Form -->
+        <div class="col-12 form-section">
+          <h2 class="fw-bold mb-4 text-center">Sign in to your account</h2>
+          <form id="loginForm" novalidate>
+            
+            <!-- Email -->
+            <div class="form-floating mb-3">
+              <input type="email" class="form-control" id="email" placeholder="name@example.com" required>
+              <label for="email">Email address</label>
+              <div id="emailError" class="validation-error"></div>
+              <div id="emailSuccess" class="validation-success"></div>
+            </div>
+            
+            <!-- Password -->
+            <div class="input-group mb-3">
+              <div class="form-floating">
+                  <input type="password" class="form-control" id="password" placeholder="Password" required>
+                  <label for="password">Password</label>
+              </div>
+              <!-- FIX 1: Corrected icon toggle logic. -->
+              <span class="input-group-text password-toggle" id="togglePassword">
+                  <i class="fas fa-eye-slash"></i>
+              </span>
+            </div>
+            <div id="passwordError" class="validation-error"></div>
+            
+            <!-- Remember Me & Forgot Password -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="rememberMe">
+                <label class="form-check-label" for="rememberMe">
+                  Remember me
+                </label>
+              </div>
+              <a href="#" class="text-decoration-none">Forgot password?</a>
+            </div>
+            
+            <!-- Login Button -->
+            <div class="d-grid mb-3">
+              <button type="submit" class="btn btn-primary">Sign In</button>
+            </div>
+
+            <!-- Separator -->
+            <div class="text-center my-3">
+                <span class="text-muted">OR</span>
+            </div>
+            
+            <!-- Google Sign-In (Now uses native logic, see JS below) -->
+            <div class="d-grid mb-3">
+                <button type="button" id="googleSignInButton" class="btn btn-google">
+                    <i class="fab fa-google me-2" style="color: var(--google-blue);"></i>Sign In with Google
+                </button>
+            </div>
+
+            <!-- Register Link -->
+            <p class="text-center text-muted">Don't have an account? <a href="register.html" class="text-decoration-none fw-bold">Create an account</a></p>
+
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS Bundle with Popper -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  
+<!-- ========================================================== -->
+<!-- CAPACITOR NATIVE SOCIAL LOGIN IMPLEMENTATION -->
+<!-- ========================================================== -->
+<script type="module">
+  // Using try/catch for the import ensures the app doesn't crash if this is run outside Capacitor
+  let SocialLogin;
+  try {
+      // Assuming @capgo/capacitor-social-login is used for native mobile authentication
+      const { SocialLogin: SL } = await import('@capgo/capacitor-social-login');
+      SocialLogin = SL;
+  } catch (e) {
+      console.warn("Capacitor SocialLogin import failed. This is expected if not running in a Capacitor environment.");
+  }
+
+
+  const BACKEND_GOOGLE_AUTH_URL = "https://www.winjob.in/api/auth/google";
+
+  async function sendTokenToBackend(idToken) {
+    try {
+        // MODIFIED: Removed credentials: 'include'.
+        const res = await fetch(BACKEND_GOOGLE_AUTH_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ token: idToken }),
+            // Removed: credentials: "include", 
+        });
+
+        const result = await res.json();
+        if (res.ok) {
+            // MODIFIED: Check for and store token in localStorage
+            const token = result.token; 
+            if (token) {
+                localStorage.setItem('jwt', token); // Store token
+                showCustomAlert("✅ Login successful with Google!", 'success');
+                window.location.href = "userProfile.html"; 
+            } else {
+                throw new Error("Login successful, but no token received from server.");
+            }
+        } else {
+            showCustomAlert("❌ " + (result.error || "Google sign-in failed on server."), 'danger');
+        }
+    } catch (error) {
+        console.error("Error sending Google token to backend:", error);
+        showCustomAlert("An error occurred during sign-in. Please try again.", 'danger');
+    }
+  }
+
+  async function initiateGoogleLogin() {
+    showCustomAlert("Initiating native Google Sign-In...", 'info');
+    
+    // Fallback if SocialLogin isn't available (i.e., not in mobile app)
+    if (!SocialLogin) {
+        showCustomAlert("Native login module unavailable. Use manual login.", 'warning');
+        return;
+    }
+
+    const WEB_CLIENT_ID_FOR_VERIFICATION = '62866830906-89e5aqkrpnsjs0dri6hsss239b5rpdd9.apps.googleusercontent.com';
+
+    try {
+        await SocialLogin.initialize({
+            google: {
+                clientId: WEB_CLIENT_ID_FOR_VERIFICATION
+            }
+        });
+    } catch (e) {
+        console.warn("Capgo Initialization failed, attempting login directly (may be normal if already initialized):", e);
+    }
+    
+
+    try {
+      const res = await SocialLogin.login({ provider: 'google' });
+      // Use logical OR to get the token from various possible properties
+      const idToken = res?.authentication?.idToken || res?.idToken || res?.credential;
+
+      if (!idToken) {
+        showCustomAlert('Google sign-in did not return a token.', 'warning');
+        return;
+      }
+
+      await sendTokenToBackend(idToken);
+
+    } catch (err) {
+      console.error('Native Google sign-in error:', err);
+      if (err.message && !err.message.includes('cancelled')) {
+        showCustomAlert('Native Google sign-in failed. Check your native setup (SHA-1/Client IDs).', 'danger');
+      } else {
+        showCustomAlert('Google Sign-In cancelled.', 'info');
+      }
+    }
+  }
+
+  // --- STANDARD DOM READY LISTENER ---
+  document.addEventListener("DOMContentLoaded", function () {
+    const loginForm = document.getElementById("loginForm");
+    const togglePassword = document.getElementById("togglePassword");
+    const passwordInput = document.getElementById("password");
+    const emailInput = document.getElementById("email");
+    const googleBtn = document.getElementById("googleSignInButton"); 
+
+    if (googleBtn) {
+        googleBtn.addEventListener("click", initiateGoogleLogin);
+    } else {
+        console.error("Google Sign-In Button not found!");
+    }
+
+    // FIX 1: Corrected Password visibility toggle logic
+    togglePassword.addEventListener("click", function () {
+      const type = passwordInput.getAttribute("type") === "password" ? "text" : "password";
+      passwordInput.setAttribute("type", type);
+      // Toggle the font awesome icons
+      this.querySelector("i").classList.toggle("fa-eye-slash");
+      this.querySelector("i").classList.toggle("fa-eye");
+    });
+
+    emailInput.addEventListener("blur", function () {
+      const email = this.value;
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const errorEl = document.getElementById("emailError");
+      const successEl = document.getElementById("emailSuccess");
+
+      if (email === "") {
+        this.classList.remove("is-valid", "is-invalid");
+        errorEl.style.display = "none";
+        successEl.style.display = "none";
+      } else if (!emailRegex.test(email)) {
+        this.classList.add("is-invalid");
+        errorEl.textContent = "Please enter a valid email address.";
+        errorEl.style.display = "block";
+        successEl.style.display = "none";
+      } else {
+        this.classList.remove("is-invalid");
+        this.classList.add("is-valid");
+        errorEl.style.display = "none";
+        successEl.textContent = "Valid email format.";
+        successEl.style.display = "block";
+      }
+    });
+
+    // FIX 2: Ensured form submission handles the fetch request 
+    loginForm.addEventListener("submit", async function (e) {
+      e.preventDefault(); // Crucial: Prevent default form submission
+
+      const email = emailInput.value.trim();
+      const password = passwordInput.value.trim();
+
+      if (!email || !password) {
+        showCustomAlert("Please fill out both fields.", 'warning');
+        return;
+      }
+
+      try {
+        // MODIFIED: Removed credentials: 'include'.
+        const res = await fetch("https://www.winjob.in/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+          // Removed: credentials: "include", 
+        });
+
+        const result = await res.json();
+        if (res.ok) {
+          // MODIFIED: Check for and store token in localStorage
+          const token = result.token;
+          if (token) {
+              localStorage.setItem('jwt', token); // Store token
+              showCustomAlert("✅ " + result.message, 'success');
+              window.location.href = "userProfile.html"; // Redirect to profile
+          } else {
+              throw new Error("Login successful, but no token received from server.");
+          }
+        } else {
+          showCustomAlert("❌ " + (result.error || "Login failed. Check your credentials."), 'danger');
+        }
+      } catch (err) {
+        console.error("Login request failed:", err);
+        showCustomAlert("Server error. Please try again later. " + err.message, 'danger');
+      }
+    });
+  });
+  
+  function showCustomAlert(message, type = 'info') {
+      let alertEl = document.getElementById('customAlert');
+      if (!alertEl) {
+          alertEl = document.createElement('div');
+          alertEl.id = 'customAlert';
+          alertEl.className = 'fixed-top p-3 d-flex justify-content-center';
+          alertEl.style.zIndex = '1055';
+          document.body.appendChild(alertEl);
+      }
+      
+      const bgColor = type === 'success' ? 'bg-success' : type === 'danger' ? 'bg-danger' : 'bg-info';
+      
+      const toastHTML = `
+          <div class="toast align-items-center text-white ${bgColor} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+              <div class="d-flex">
+                  <div class="toast-body">
+                      ${message}
+                  </div>
+                  <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+              </div>
+          </div>
+      `;
+      
+      alertEl.innerHTML = toastHTML;
+      const toast = new bootstrap.Toast(alertEl.querySelector('.toast'), { delay: 5000 });
+      toast.show();
+      
+      alertEl.querySelector('.toast').addEventListener('hidden.bs.toast', (e) => e.target.remove());
+  }
+</script>
+
+</body>
+</html>

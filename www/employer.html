@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employer Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" href="https://winjob.in/images/favicon.ico" type="image/x-icon">
+
+    <style>
+        /* Base & Layout */
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f8f9fa; 
+            padding-bottom: 70px; /* Space for bottom navbar */
+        }
+        
+        .main-content { 
+            padding: 1rem; 
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        /* Mobile Bottom Navigation */
+        .mobile-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: #fff;
+            border-top: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-around;
+            padding: 0.5rem 0;
+            z-index: 1000;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .mobile-nav-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0.5rem;
+            color: #6c757d;
+            text-decoration: none;
+            border: none;
+            background: none;
+            flex: 1;
+            transition: all 0.2s ease;
+        }
+        
+        .mobile-nav-btn i {
+            font-size: 1.2rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .mobile-nav-btn span {
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .mobile-nav-btn.active {
+            color: #0d6efd;
+        }
+        
+        .mobile-nav-btn:hover {
+            color: #0d6efd;
+        }
+        
+        /* Content Sections */
+        .content-section { 
+            display: none; 
+            animation: fadeIn 0.4s ease-out; 
+        }
+        
+        .content-section.active { 
+            display: block; 
+        }
+        
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(15px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+        
+        .card { 
+            border: none; 
+            border-radius: 0.75rem; 
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.07); 
+            margin-bottom: 1.5rem;
+        }
+        
+        .placeholder-text { 
+            color: #6c757d; 
+            text-align: center; 
+            padding: 3rem; 
+        }
+        
+        input:read-only { 
+            background-color: #e9ecef; 
+            cursor: not-allowed; 
+        }
+        
+        /* Toast Notifications */
+        #toastContainer { 
+            position: fixed; 
+            top: 20px; 
+            right: 20px; 
+            z-index: 1055; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px; 
+        }
+        
+        .toast-notification { 
+            padding: 1rem 1.5rem; 
+            border-radius: 0.5rem; 
+            color: #fff; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
+            display: flex; 
+            align-items: center; 
+            gap: 1rem; 
+            opacity: 0; 
+            transform: translateX(100%); 
+            animation: slideIn 0.5s forwards, fadeOut 0.5s 4.5s forwards; 
+        }
+        
+        .toast-notification.success { 
+            background-color: #28a745; 
+        }
+        
+        .toast-notification.error { 
+            background-color: #dc3545; 
+        }
+        
+        .toast-notification.warning { 
+            background-color: #ffc107; 
+            color: #212529;
+        }
+        
+        .toast-notification i { 
+            font-size: 1.2rem; 
+        }
+        
+        @keyframes slideIn { 
+            to { opacity: 1; transform: translateX(0); } 
+        }
+        
+        @keyframes fadeOut { 
+            from { opacity: 1; } 
+            to { opacity: 0; transform: translateX(100%);} 
+        }
+
+        /* Skills Input Tags */
+        .skills-input-container { 
+            position: relative; 
+        }
+        
+        .skills-input-wrapper { 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 0.5rem; 
+            padding: 0.5rem; 
+            border: 1px solid #ced4da; 
+            border-radius: 0.375rem; 
+        }
+        
+        .skill-tag { 
+            display: flex; 
+            align-items: center; 
+            background-color: #e9ecef; 
+            padding: 0.25rem 0.75rem; 
+            border-radius: 1rem; 
+            font-size: 0.9rem; 
+        }
+        
+        .skill-tag .remove-skill { 
+            margin-left: 0.5rem; 
+            cursor: pointer; 
+            border: none; 
+            background: none; 
+            font-size: 1rem; 
+            color: #6c757d; 
+        }
+        
+        .skills-input-wrapper input { 
+            flex-grow: 1; 
+            border: none; 
+            outline: none; 
+            padding: 0.25rem; 
+        }
+        
+        .suggestions-list { 
+            position: absolute; 
+            top: 100%; 
+            left: 0; 
+            right: 0; 
+            background-color: #fff; 
+            border: 1px solid #ced4da; 
+            border-top: none; 
+            border-radius: 0 0 0.375rem 0.375rem; 
+            z-index: 100; 
+            max-height: 200px; 
+            overflow-y: auto; 
+        }
+        
+        .suggestion-item { 
+            padding: 0.5rem 1rem; 
+            cursor: pointer; 
+        }
+        
+        .suggestion-item:hover { 
+            background-color: #f1f3f5; 
+        }
+
+        /* Applicant Details Layout */
+        .card-header[aria-expanded="true"] .fa-chevron-down { 
+            transform: rotate(180deg); 
+        }
+        
+        .fa-chevron-down { 
+            transition: transform 0.2s ease-in-out; 
+        }
+        
+        .border-start-lg { 
+            border-left: 1px solid #dee2e6; 
+        }
+        
+        @media (max-width: 991.98px) {
+            .border-start-lg { 
+                border-left: none; 
+                border-top: 1px solid #dee2e6; 
+                padding-top: 1.5rem; 
+                margin-top: 1.5rem; 
+            }
+        }
+        
+        /* Review Section Styling */
+        .review-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+            gap: 1rem 2rem; 
+        }
+        
+        .review-item strong { 
+            color: #495057; 
+        }
+        
+        .review-section-title { 
+            font-weight: 600; 
+            color: #0d6efd; 
+            border-bottom: 2px solid #e9ecef; 
+            padding-bottom: 0.5rem; 
+            margin-top: 1.5rem; 
+            margin-bottom: 1rem; 
+        }
+        
+        /* Mobile Header */
+        .mobile-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            background-color: #fff;
+            border-bottom: 1px solid #dee2e6;
+            margin: -1rem -1rem 1.5rem -1rem;
+        }
+        
+        .mobile-header .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #0d6efd;
+        }
+        
+        .mobile-header .company-name {
+            font-weight: 600;
+            color: #343a40;
+            font-size: 0.9rem;
+            text-align: right;
+        }
+        
+        /* Responsive adjustments */
+        @media (min-width: 768px) {
+            .mobile-nav {
+                display: none;
+            }
+            
+            .mobile-header {
+                display: none;
+            }
+            
+            body {
+                padding-bottom: 0;
+            }
+        }
+        
+        @media (max-width: 767.98px) {
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+            
+            .card-body {
+                padding: 1rem;
+            }
+            
+            .btn-group-responsive {
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .btn-group-responsive .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="toastContainer"></div>
+
+    <!-- Mobile Header -->
+    <div class="mobile-header d-md-none">
+        <div class="logo">WinJob</div>
+        <div class="company-name" id="mobileCompanyName">Loading...</div>
+    </div>
+
+    <main class="main-content">
+        <!-- Section for posting a new job -->
+        <section id="postJobSection" class="content-section active">
+            <div class="card">
+                <div class="card-header bg-white py-3"><h5 class="mb-0">Post a New Job Opening</h5></div>
+                <div class="card-body p-4">
+                    <form id="postJobForm">
+                        <div class="row g-3">
+                            <div class="col-md-3"><label for="country" class="form-label">Country</label><input type="text" class="form-control" id="country"></div>
+                            <div class="col-md-3"><label for="state" class="form-label">State</label><input type="text" class="form-control" id="state"></div>
+                            <div class="col-md-3"><label for="city" class="form-label">City</label><input type="text" class="form-control" id="city"></div>
+                            <div class="col-md-3"><label for="zipCode" class="form-label">Zip Code</label><input type="text" class="form-control" id="zipCode"></div>
+                            <hr class="my-3">
+                            <div class="col-md-6"><label for="postJobCompanyName" class="form-label">Company Name</label><input type="text" class="form-control" id="postJobCompanyName" readonly></div>
+                            <div class="col-md-6"><label for="jobTitle" class="form-label">Job Title</label><input type="text" class="form-control" id="jobTitle" required></div>
+                            <div class="col-md-6"><label for="industry" class="form-label">Industry</label><select id="industry" class="form-select" required></select></div>
+                            <div class="col-md-6"><label for="requiredExperience" class="form-label">Required Experience</label><input type="text" class="form-control" id="requiredExperience" placeholder="e.g., 2+ Years"></div>
+                            
+                            <div class="col-md-6"><label for="jobType" class="form-label">Job Type</label><select id="jobType" class="form-select"><option value="Full-time" selected>Full-time</option><option value="Part-time">Part-time</option><option value="Contract">Contract</option><option value="Internship">Internship</option></select></div>
+                            <div class="col-md-6"><label for="workLocation" class="form-label">Work Location</label><select id="workLocation" class="form-select"><option value="In-office">In-office</option><option value="Remote">Remote</option><option value="Hybrid">Hybrid</option></select></div>
+                            
+                            <div class="col-md-3"><label for="salaryMin" class="form-label">Salary Minimum</label><input type="number" class="form-control" id="salaryMin" placeholder="e.g., 80000"></div>
+                            <div class="col-md-3"><label for="salaryMax" class="form-label">Salary Maximum</label><input type="number" class="form-control" id="salaryMax" placeholder="e.g., 120000"></div>
+                            <div class="col-md-2"><label for="salaryCurrency" class="form-label">Currency</label><select id="salaryCurrency" class="form-select"><option value="INR">₹ INR</option><option value="USD">$ USD</option><option value="EUR">€ EUR</option><option value="GBP">£ GBP</option><option value="AED">د.إ AED</option><option value="CAD">C$ CAD</option><option value="AUD">A$ AUD</option></select></div>
+                            <div class="col-md-2"><label for="salaryPeriod" class="form-label">Period</label><select id="salaryPeriod" class="form-select"><option value="Hourly">Hourly</option><option value="Monthly">Monthly</option><option value="Yearly" selected>Yearly</option></select></div>
+                            <div class="col-md-2"><label for="salaryPeriodCount" class="form-label" id="salaryPeriodCountLabel">No. of Years</label><div class="input-group"><button class="btn btn-outline-secondary" type="button" id="decrementPeriodCount">-</button><input type="number" class="form-control text-center" id="salaryPeriodCount" value="1" min="1"><button class="btn btn-outline-secondary" type="button" id="incrementPeriodCount">+</button></div></div>
+                            <hr class="my-3">
+                            <div class="col-md-4"><label for="postedByName" class="form-label">Contact Person</label><input type="text" class="form-control" id="postedByName" required></div>
+                            <div class="col-md-4"><label for="postedByEmail" class="form-label">Contact Email</label><input type="email" class="form-control" id="postedByEmail" required></div>
+                            <div class="col-md-4"><label for="postedByPhone" class="form-label">Contact Mobile</label><input type="tel" class="form-control" id="postedByPhone" readonly></div>
+                            <div class="col-12"><label for="jobDescription" class="form-label">Job Description</label><textarea class="form-control" id="jobDescription" rows="5" required></textarea></div>
+                            <div class="col-12"><label for="responsibilities" class="form-label">Responsibilities</label><textarea class="form-control" id="responsibilities" rows="5" placeholder="List each responsibility on a new line..."></textarea></div>
+                            <div class="col-12"><label class="form-label">Primary Skills</label><div id="requiredSkills" class="skills-input-container"></div></div>
+                            <div class="col-12"><label class="form-label">Secondary Skills</label><div id="additionalSkills" class="skills-input-container"></div></div>
+                        </div>
+                        <div class="mt-4 text-end"><button type="submit" class="btn btn-primary px-4">Review Job</button></div>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section for reviewing the job before posting -->
+        <section id="reviewJobSection" class="content-section">
+            <div class="card">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">Review Your Job Posting</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div id="reviewContent">
+                        <!-- Job details will be injected here by JS -->
+                    </div>
+                    <div class="mt-4 text-end btn-group-responsive">
+                        <button type="button" class="btn btn-secondary px-4 me-2" id="editJobBtn">Edit Details</button>
+                        <button type="button" class="btn btn-success px-4" id="confirmPostBtn">Confirm & Post Job</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section for viewing posted jobs -->
+        <section id="myJobsSection" class="content-section">
+            <h3 class="mb-4">My Posted Jobs</h3>
+            <div id="jobsContainer"><p class="placeholder-text">Loading jobs...</p></div>
+        </section>
+
+        <!-- Section for viewing applicants for a job -->
+        <section id="applicantsSection" class="content-section">
+            <button id="backToJobsBtn" class="btn btn-outline-secondary mb-3"><i class="fas fa-arrow-left me-2"></i>Back to Jobs</button>
+            <h3 class="mb-4">Applicants for: <span id="applicantJobTitle" class="text-primary"></span></h3>
+            <div id="applicantsContainer"><p class="placeholder-text">Loading applicants...</p></div>
+        </section>
+
+        <!-- Section for updating company profile -->
+        <section id="updateProfileSection" class="content-section">
+            <div class="card">
+                <div class="card-header bg-white py-3"><h5 class="mb-0">Update Company Profile</h5></div>
+                <div class="card-body p-4">
+                    <form id="updateProfileForm">
+                        <div class="row g-3">
+                            <div class="col-12"><label class="form-label">Company Logo</label><div class="d-flex align-items-center"><img id="logoPreview" src="https://placehold.co/100x100/EFEFEF/AAAAAA&text=Logo" alt="Company Logo" class="me-3 rounded" style="width: 100px; height: 100px; object-fit: cover;"><input type="file" class="form-control" id="companyLogo" accept="image/*"></div></div>
+                            <div class="col-md-6"><label for="companyName" class="form-label">Company Name</label><input type="text" class="form-control" id="companyName" required></div>
+                            <div class="col-md-6"><label for="companyWebsite" class="form-label">Website</label><input type="url" class="form-control" id="companyWebsite"></div>
+                            <div class="col-md-6"><label for="companyEmail" class="form-label">Email</label><input type="email" class="form-control" id="companyEmail" required readonly></div>
+                            <div class="col-md-6"><label for="personName" class="form-label">Contact Person</label><input type="text" class="form-control" id="personName"></div>
+                            <div class="col-md-6"><label for="phoneNumber" class="form-label">Phone Number</label><input type="tel" class="form-control" id="phoneNumber"></div>
+                            <div class="col-md-6"><label for="address" class="form-label">Address</label><input type="text" class="form-control" id="address"></div>
+                            <div class="col-12"><label for="companyDescription" class="form-label">Description</label><textarea class="form-control" id="companyDescription" rows="4"></textarea></div>
+                        </div>
+                        <div class="mt-4 text-end"><button type="submit" class="btn btn-primary px-4">Save Changes</button></div>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Mobile Bottom Navigation -->
+    <div class="mobile-nav d-md-none">
+        <button class="mobile-nav-btn active" data-section="postJobSection">
+            <i class="fas fa-plus-circle"></i>
+            <span>Post Job</span>
+        </button>
+        <button class="mobile-nav-btn" data-section="myJobsSection">
+            <i class="fas fa-briefcase"></i>
+            <span>My Jobs</span>
+        </button>
+        <button class="mobile-nav-btn" data-section="updateProfileSection">
+            <i class="fas fa-user-edit"></i>
+            <span>Profile</span>
+        </button>
+        <button class="mobile-nav-btn" id="mobileLogoutButton">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Logout</span>
+        </button>
+    </div>
+
+    <!-- Bootstrap JS Bundle for collapse functionality -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // 🚨 Check for token on load. If missing, redirect immediately.
+            const token = sessionStorage.getItem('authToken');
+            const BASE_URL = 'https://www.winjob.in'; // Assuming the backend is hosted here
+            
+            if (!token) {
+                window.location.href = 'employerlogin.html';
+                return;
+            }
+
+            let currentCompanyProfile = null;
+            let jobDataForReview = null;
+
+            // --- Populate Industry Dropdown ---
+            const industryDropdown = document.getElementById('industry');
+            const industries = [
+                "Information Technology (IT)", "Manufacturing", "Banking", "Healthcare", "Education",
+                "Retail", "Media", "Telecommunications", "Energy", "Real Estate", "Transportation",
+                "Tourism", "Food Industry", "Compliance", "Public Sector", "Recruitment",
+                "Research", "Fitness", "Social Enterprises"
+            ];
+            industryDropdown.innerHTML = '<option value="" selected disabled>Select an Industry</option>' + 
+                industries.map(i => `<option value="${i}">${i}</option>`).join('');
+
+
+            const toastContainer = document.getElementById('toastContainer');
+            const showToast = (message, type = 'success') => {
+                const toast = document.createElement('div');
+                toast.className = `toast-notification ${type}`;
+                let iconClass = 'fas fa-check-circle';
+                if (type === 'error') iconClass = 'fas fa-times-circle';
+                if (type === 'warning') iconClass = 'fas fa-exclamation-triangle';
+                toast.innerHTML = `<i class="${iconClass}"></i><span>${message}</span>`;
+                toastContainer.appendChild(toast);
+                setTimeout(() => { toast.remove(); }, 5000);
+            };
+
+            // 🚨 SECURE DATA FETCHING FUNCTION (Updated to use BASE_URL consistently)
+            const fetchData = async (endpoint, options = {}) => {
+                const url = endpoint.startsWith('http') ? endpoint : `${BASE_URL}/api${endpoint}`;
+                
+                try {
+                    const defaultHeaders = { 
+                        'Authorization': `Bearer ${token}` 
+                    };
+
+                    // Only set Content-Type for JSON if not sending FormData (for file uploads)
+                    if (!(options.body instanceof FormData)) {
+                        defaultHeaders['Content-Type'] = 'application/json';
+                        if (options.body && typeof options.body !== 'string') {
+                            options.body = JSON.stringify(options.body);
+                        }
+                    }
+                    
+                    const response = await fetch(url, { 
+                        ...options, 
+                        headers: { ...defaultHeaders, ...options.headers } 
+                    });
+                    
+                    // 🚨 Critical Security Check: If 401/403, clear token and redirect
+                    if (response.status === 401 || response.status === 403) {
+                        sessionStorage.removeItem('authToken'); // Clear invalid token
+                        showToast("Session expired. Please log in again.", 'error');
+                        setTimeout(() => { window.location.href = 'employerlogin.html'; }, 1000);
+                        return null; 
+                    }
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || errorData.error || `Error: ${response.status}`);
+                    }
+                    
+                    const contentType = response.headers.get("content-type");
+                    if (contentType && contentType.indexOf("application/json") !== -1) {
+                         return await response.json();
+                    }
+                    return null;
+                } catch (error) {
+                    console.error('API call failed:', error);
+                    showToast(error.message, 'error');
+                    return null;
+                }
+            };
+            
+            // --- Skills Input Component (Gemini Integration - UNCHANGED) ---
+            class SkillsInput {
+                constructor(containerId) {
+                    this.container = document.getElementById(containerId);
+                    this.skills = new Set();
+                    this.apiKey = ""; // Empty key, Canvas will inject it
+                    this.apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${this.apiKey}`;
+                    this._render();
+                }
+                _render() {
+                    this.container.innerHTML = `<div class="skills-input-wrapper">${[...this.skills].map(skill => `<div class="skill-tag">${skill}<button class="remove-skill" data-skill="${skill}">&times;</button></div>`).join('')}<input type="text" placeholder="Add a skill..."></div><div class="suggestions-list" style="display: none;"></div>`;
+                    this._addEventListeners();
+                }
+                _addEventListeners() {
+                    const input = this.container.querySelector('input');
+                    this.container.addEventListener('click', e => { if (e.target.classList.contains('remove-skill')) { this.removeSkill(e.target.dataset.skill); } });
+                    input.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); const skill = input.value.trim(); if (skill) { this.addSkill(skill); input.value = ''; } } });
+                    input.addEventListener('input', e => this.getSuggestions(e.target.value));
+                }
+                async getSuggestions(query) {
+                    const suggestionsList = this.container.querySelector('.suggestions-list');
+                    if (query.length < 2) { suggestionsList.style.display = 'none'; return; }
+                    
+                    suggestionsList.innerHTML = `<div class="suggestion-item text-center text-muted"><span class="spinner-border spinner-border-sm me-2"></span>Loading...</div>`;
+                    suggestionsList.style.display = 'block';
+
+                    try {
+                        const payload = { contents: [{ parts: [{ text: `Generate a list of 5 technical skills related to "${query}". Return only a comma-separated list.` }] }] };
+                        const response = await fetch(this.apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                        const data = await response.json();
+                        
+                        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+                        if (!text) { suggestionsList.style.display = 'none'; return; }
+
+                        const suggestions = text.split(',').map(s => s.trim()).filter(s => s.length > 0);
+                        suggestionsList.innerHTML = suggestions.map(s => `<div class="suggestion-item">${s}</div>`).join('');
+                        
+                        suggestionsList.querySelectorAll('.suggestion-item').forEach(item => { 
+                            item.addEventListener('click', () => { 
+                                this.addSkill(item.textContent); 
+                                this.container.querySelector('input').value = ''; 
+                                suggestionsList.style.display = 'none'; 
+                            }); 
+                        });
+                    } catch (error) { 
+                        suggestionsList.style.display = 'none';
+                    }
+                }
+                addSkill(skill) { this.skills.add(skill); this._render(); }
+                removeSkill(skill) { this.skills.delete(skill); this._render(); }
+                getSkills() { return [...this.skills]; }
+                reset() { this.skills.clear(); this._render(); }
+                setSkills(skillsArray) { this.skills = new Set(skillsArray); this._render(); }
+            }
+
+            const requiredSkillsInput = new SkillsInput('requiredSkills');
+            const additionalSkillsInput = new SkillsInput('additionalSkills');
+
+            // --- API Calls ---
+            const fetchCompanyProfile = async () => {
+                // Fetch profile using relative path
+                const profile = await fetchData(`/company/profile`);
+                if (profile) { 
+                    currentCompanyProfile = profile; 
+                    renderCompanyProfile(profile); 
+                }
+                // Re-fetch jobs after profile is loaded
+                if (profile) { fetchJobs(); }
+            };
+
+            const fetchJobs = async () => {
+                if (!currentCompanyProfile || !currentCompanyProfile.id) return;
+                // Fetch jobs using relative path
+                const data = await fetchData(`/jobs/company/${currentCompanyProfile.id}`);
+                if (data && data.jobs) renderJobs(data.jobs);
+            };
+
+            const renderCompanyProfile = (profile) => {
+                const timestamp = '?t=' + new Date().getTime(); // Force logo refresh
+                // Ensure logo URL uses the full path if available
+                const logoBaseUrl = profile.logo_url && profile.logo_url.startsWith('/') ? `${BASE_URL}${profile.logo_url}` : profile.logo_url;
+                const logoUrl = logoBaseUrl || 'https://placehold.co/80x80/EFEFEF/AAAAAA&text=L';
+                
+                // Update mobile header
+                document.getElementById('mobileCompanyName').textContent = profile.company_name;
+                
+                document.getElementById('logoPreview').src = logoUrl + timestamp;
+                
+                // --- Populate Forms ---
+                document.getElementById('companyName').value = profile.company_name || '';
+                document.getElementById('postJobCompanyName').value = profile.company_name || '';
+
+                document.getElementById('companyWebsite').value = profile.website || '';
+                document.getElementById('companyEmail').value = profile.user_email || '';
+                document.getElementById('personName').value = profile.contact_person || '';
+                document.getElementById('phoneNumber').value = profile.contact_phone || '';
+                document.getElementById('address').value = profile.address || '';
+                document.getElementById('companyDescription').value = profile.description || '';
+                
+                document.getElementById('postedByName').value = profile.contact_person || '';
+                document.getElementById('postedByEmail').value = profile.user_email || '';
+                document.getElementById('postedByPhone').value = profile.contact_phone || '';
+            };
+
+            // --- Job Listing Rendering (UNCHANGED) ---
+            const renderJobs = (jobs) => {
+                const container = document.getElementById('jobsContainer');
+                 if (jobs.length === 0) {
+                    container.innerHTML = '<p class="placeholder-text">You have not posted any jobs yet.</p>';
+                    return;
+                }
+                container.innerHTML = jobs.map(job => {
+                    let salaryInfo = '';
+                    if (job.salary_min && job.salary_max) {
+                        const periodCount = job.salary_period_count || 1;
+                        const period = job.salary_period || 'Year';
+                        let periodText = period;
+                        if (periodCount > 1) { periodText = `${periodCount} ${period.replace('ly','s')}`; }
+                        salaryInfo = `<div class="text-success fw-bold mt-1"><small>${job.salary_currency} ${job.salary_min.toLocaleString()} - ${job.salary_max.toLocaleString()} per ${periodText}</small></div>`;
+                    }
+                    
+                    let skills = job.required_skills;
+                    try { if (typeof skills === 'string') skills = JSON.parse(skills); } catch (e) { skills = []; }
+                    const skillsHtml = (skills && Array.isArray(skills)) ? skills.map(skill => `<span class="badge bg-secondary me-1">${skill}</span>`).join('') : '';
+
+                    return `
+                    <div class="card mb-3">
+                        <div class="card-body">
+                           <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h5 class="card-title mb-1">${job.job_title}</h5>
+                                    <h6 class="card-subtitle text-muted"><i class="fas fa-map-marker-alt fa-fw me-1"></i>${job.city || 'N/A'}, ${job.country || ''}</h6>
+                                    <p class="mt-2"><strong>${job.job_type} | ${job.work_location}</strong></p>
+                                    <div>${skillsHtml}</div>
+                                    ${salaryInfo}
+                                </div>
+                                <span class="badge bg-${job.status === 'active' ? 'success' : 'secondary'}">${job.status}</span>
+                           </div>
+                        </div>
+                        <div class="card-footer bg-white text-end">
+                            <button class="btn btn-sm btn-primary view-applications-btn" data-job-id="${job.id}" data-job-title="${job.job_title}">
+                                <i class="fas fa-users me-1"></i>View Applications
+                            </button>
+                        </div>
+                    </div>`;
+                }).join('');
+            };
+
+            // --- Applicant Details Rendering (UNCHANGED) ---
+            const renderApplicants = (applicants) => {
+                const container = document.getElementById('applicantsContainer');
+                if (!applicants || applicants.length === 0) {
+                    container.innerHTML = '<div class="card"><div class="card-body text-center placeholder-text">No applications received for this job yet.</div></div>';
+                    return;
+                }
+
+                const createDetailSection = (title, content) => {
+                    const hasContent = content && (
+                        (Array.isArray(content) && content.length > 0) || 
+                        (typeof content === 'string' && content.trim() !== '' && content.trim() !== 'Not specified' && content.trim().toLowerCase() !== 'n/a')
+                    );
+                    if (!hasContent) {
+                        return '';
+                    }
+                    return `
+                        <div class="mt-4">
+                            <h6 class="small fw-bold text-uppercase text-muted pb-1 mb-2 border-bottom">${title}</h6>
+                            <div class="ps-1 small">${content}</div>
+                        </div>`;
+                };
+                
+                const formatArrayData = (arr, renderFn) => {
+                    let safeArr = arr;
+                    if (typeof arr === 'string') {
+                         try { safeArr = JSON.parse(arr); } catch (e) { safeArr = []; }
+                    }
+                    
+                    if (Array.isArray(safeArr)) {
+                        safeArr = safeArr.filter(item => {
+                            if (item === null || typeof item === 'undefined') return false;
+                            if (typeof item === 'string' && item.trim() === '') return false;
+                            if (typeof item === 'object' && Object.keys(item).length === 0) return false;
+                            return true;
+                        });
+                    }
+
+                    if (!Array.isArray(safeArr) || safeArr.length === 0) {
+                        return '<span class="text-muted">Not specified.</span>';
+                    }
+                    return safeArr.map(renderFn).join('');
+                };
+
+                container.innerHTML = applicants.map((application, index) => {
+                    let profile = application.user_profile_snapshot;
+                    
+                    if (typeof profile === 'string') {
+                         try {
+                            profile = JSON.parse(profile);
+                         } catch (e) {
+                            console.error("Failed to parse user_profile_snapshot:", e);
+                            profile = application;
+                         }
+                    } else if (typeof profile !== 'object' || profile === null || !profile.education) {
+                        profile = application; 
+                    }
+
+                    if (!profile) return '';
+
+                    const personal = profile.personalDetails || {};
+                    const ctc = profile.ctc || {};
+                    const resumeBaseUrl = personal.resumeUrl || profile.resumeUrl;
+                    const resumeUrl = resumeBaseUrl && resumeBaseUrl.startsWith('/') ? `${BASE_URL}${resumeBaseUrl}` : resumeBaseUrl;
+                    const uniqueId = `applicant-details-${index}`;
+                    
+                    let experienceDisplay = personal.experienceLevel;
+                    const totalYears = profile.total_experience || personal.total_experience;
+                    if (totalYears && typeof totalYears === 'number' && totalYears > 0) {
+                         experienceDisplay = `${totalYears} Years`;
+                    } else if (personal.experienceLevel && personal.experienceLevel.toLowerCase() !== 'experienced') {
+                         experienceDisplay = personal.experienceLevel;
+                    } else {
+                        experienceDisplay = 'Not specified';
+                    }
+
+                    const educationItems = formatArrayData(profile.education, (edu) => {
+                        if (!edu || (!edu.degree && !edu.fieldOfStudy && !edu.institution)) return '';
+                        return `<div class="mb-2">
+                            <strong>${edu.degree || 'Degree not specified'}</strong> in ${edu.fieldOfStudy || 'Field not specified'}<br>
+                            <span class="text-muted">${edu.institution || 'Institution not specified'}</span>
+                            ${edu.yearOfCompletion ? `<br><small>Completed: ${edu.yearOfCompletion}</small>` : ''}
+                        </div>`;
+                    });
+
+                    const experienceItems = formatArrayData(profile.workExperience, (exp) => {
+                        if (!exp || (!exp.company && !exp.position && !exp.duration)) return '';
+                        return `<div class="mb-2">
+                            <strong>${exp.position || 'Position not specified'}</strong> at ${exp.company || 'Company not specified'}<br>
+                            <span class="text-muted">${exp.duration || 'Duration not specified'}</span>
+                            ${exp.description ? `<br><small>${exp.description}</small>` : ''}
+                        </div>`;
+                    });
+
+                    const skillsItems = formatArrayData(profile.skills, (skill) => {
+                        if (!skill || (typeof skill === 'string' && skill.trim() === '')) return '';
+                        return `<span class="badge bg-light text-dark me-1 mb-1">${skill}</span>`;
+                    });
+
+                    const projectsItems = formatArrayData(profile.projects, (project) => {
+                        if (!project || (!project.title && !project.description)) return '';
+                        return `<div class="mb-2">
+                            <strong>${project.title || 'Untitled Project'}</strong>
+                            ${project.description ? `<br><small>${project.description}</small>` : ''}
+                        </div>`;
+                    });
+
+                    const certificationsItems = formatArrayData(profile.certifications, (cert) => {
+                        if (!cert || (typeof cert === 'string' && cert.trim() === '')) return '';
+                        return `<div class="mb-1"><i class="fas fa-certificate text-warning me-1"></i>${cert}</div>`;
+                    });
+
+                    const languagesItems = formatArrayData(profile.languages, (lang) => {
+                        if (!lang || (typeof lang === 'string' && lang.trim() === '')) return '';
+                        return `<span class="badge bg-light text-dark me-1 mb-1">${lang}</span>`;
+                    });
+
+                    const awardsItems = formatArrayData(profile.awards, (award) => {
+                        if (!award || (typeof award === 'string' && award.trim() === '')) return '';
+                        return `<div class="mb-1"><i class="fas fa-trophy text-warning me-1"></i>${award}</div>`;
+                    });
+
+                    const publicationsItems = formatArrayData(profile.publications, (pub) => {
+                        if (!pub || (typeof pub === 'string' && pub.trim() === '')) return '';
+                        return `<div class="mb-1"><i class="fas fa-book text-info me-1"></i>${pub}</div>`;
+                    });
+
+                    const referencesItems = formatArrayData(profile.references, (ref) => {
+                        if (!ref || (typeof ref === 'string' && ref.trim() === '')) return '';
+                        return `<div class="mb-1"><i class="fas fa-user-check text-success me-1"></i>${ref}</div>`;
+                    });
+
+                    const portfolioItems = formatArrayData(profile.portfolio, (item) => {
+                        if (!item || (typeof item === 'string' && item.trim() === '')) return '';
+                        return `<div class="mb-1"><i class="fas fa-link text-primary me-1"></i><a href="${item}" target="_blank">${item}</a></div>`;
+                    });
+
+                    let expectedCtcText = 'Not specified';
+                    if (ctc.expected && !isNaN(parseFloat(ctc.expected))) {
+                        const currency = ctc.currency || 'INR'; 
+                        expectedCtcText = parseFloat(ctc.expected).toLocaleString('en-IN', { style: 'currency', currency: currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }); 
+                    }
+                    
+                    const profilePhotoBaseUrl = personal.profilePhoto;
+                    const profilePhotoUrl = profilePhotoBaseUrl && profilePhotoBaseUrl.startsWith('/') ? `${BASE_URL}${profilePhotoBaseUrl}` : profilePhotoBaseUrl || 'https://placehold.co/60x60/EFEFEF/AAAAAA&text=NA';
+
+
+                    return `
+                    <div class="card mb-2 shadow-sm">
+                        <div class="card-header bg-white p-3" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#${uniqueId}" aria-expanded="false" aria-controls="${uniqueId}">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <img src="${profilePhotoUrl}" class="rounded-circle me-3" width="50" height="50" alt="Applicant Photo" style="object-fit:cover;">
+                                    <div>
+                                        <h6 class="mb-0">${personal.fullName || 'N/A'}</h6>
+                                        <small class="text-muted">
+                                            <i class="fas fa-briefcase fa-fw me-1"></i> ${experienceDisplay}
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    ${resumeUrl ? `<a href="${resumeUrl}" target="_blank" class="btn btn-sm btn-outline-primary me-2" onclick="event.stopPropagation();"><i class="fas fa-file-alt me-1"></i> Resume</a>` : ''}
+                                    <span class="text-muted">
+                                        <i class="fas fa-chevron-down fa-fw transition-transform"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="collapse" id="${uniqueId}">
+                            <div class="card-body p-4 bg-light">
+                                <div class="row">
+                                    <div class="col-lg-5">
+                                        ${createDetailSection('Contact Information', `
+                                            <p class="mb-1"><i class="fas fa-envelope fa-fw me-2 text-muted"></i>${personal.email || 'N/A'}</p>
+                                            <p class="mb-0"><i class="fas fa-phone fa-fw me-2 text-muted"></i>${personal.phone || 'N/A'}</p>
+                                        `)}
+                                        ${createDetailSection('Salary & Availability', `
+                                            <p class="mb-1"><strong>Expected CTC:</strong> ${expectedCtcText}</p>
+                                            <p class="mb-0"><strong>Notice Period:</strong> ${profile.noticePeriod || 'Not specified'}</p>
+                                        `)}
+                                        ${createDetailSection('Skills', skillsItems)}
+                                        ${createDetailSection('Languages', languagesItems)}
+                                    </div>
+                                    <div class="col-lg-7 border-start-lg">
+                                        ${createDetailSection('Work Experience', experienceItems)}
+                                        ${createDetailSection('Education', educationItems)}
+                                        ${createDetailSection('Projects', projectsItems)}
+                                        ${createDetailSection('Certifications', certificationsItems)}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+                }).join('');
+            };
+
+            // --- Navigation ---
+            const showSection = (sectionId) => {
+                document.querySelectorAll('.content-section').forEach(section => section.classList.remove('active'));
+                document.querySelectorAll('.mobile-nav-btn').forEach(btn => btn.classList.remove('active'));
+                document.getElementById(sectionId).classList.add('active');
+                const activeBtn = document.querySelector(`.mobile-nav-btn[data-section="${sectionId}"]`);
+                if (activeBtn) activeBtn.classList.add('active');
+
+                if (sectionId === 'myJobsSection') fetchJobs();
+                // Ensure profile reloads only when navigating to it (fetchCompanyProfile() already handles the initial fetch)
+            };
+
+            document.querySelectorAll('.mobile-nav-btn[data-section]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    showSection(btn.dataset.section);
+                });
+            });
+
+            // --- Event Listeners ---
+            document.getElementById('postJobForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                jobDataForReview = {
+                    job_title: document.getElementById('jobTitle').value,
+                    industry: document.getElementById('industry').value,
+                    required_experience: document.getElementById('requiredExperience').value,
+                    job_type: document.getElementById('jobType').value,
+                    work_location: document.getElementById('workLocation').value,
+                    salary_min: parseInt(document.getElementById('salaryMin').value),
+                    salary_max: parseInt(document.getElementById('salaryMax').value),
+                    salary_currency: document.getElementById('salaryCurrency').value,
+                    salary_period: document.getElementById('salaryPeriod').value,
+                    salary_period_count: parseInt(document.getElementById('salaryPeriodCount').value),
+                    posted_by_name: document.getElementById('postedByName').value,
+                    posted_by_email: document.getElementById('postedByEmail').value,
+                    job_description: document.getElementById('jobDescription').value,
+                    responsibilities: document.getElementById('responsibilities').value,
+                    required_skills: requiredSkillsInput.getSkills(),
+                    additional_skills: additionalSkillsInput.getSkills(),
+                    country: document.getElementById('country').value,
+                    state: document.getElementById('state').value,
+                    city: document.getElementById('city').value,
+                    zip_code: document.getElementById('zipCode').value
+                };
+                renderReviewSection();
+                showSection('reviewJobSection');
+            });
+
+            document.getElementById('editJobBtn').addEventListener('click', () => { showSection('postJobSection'); });
+            document.getElementById('confirmPostBtn').addEventListener('click', async () => {
+                if (!jobDataForReview) return;
+                // Post job using relative path
+                const result = await fetchData(`/jobs/post`, { method: 'POST', body: jobDataForReview });
+                if (result) { 
+                    showToast('Job posted successfully!'); 
+                    showSection('myJobsSection'); 
+                    jobDataForReview = null; 
+                    document.getElementById('postJobForm').reset();
+                    requiredSkillsInput.reset();
+                    additionalSkillsInput.reset();
+                }
+            });
+
+            document.getElementById('backToJobsBtn').addEventListener('click', () => { showSection('myJobsSection'); });
+
+            // 🚨 FIX: Corrected method to PATCH, updated URL to use relative path, and ensured full refresh
+            document.getElementById('updateProfileForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData();
+                formData.append('company_name', document.getElementById('companyName').value);
+                formData.append('website', document.getElementById('companyWebsite').value);
+                formData.append('contact_person', document.getElementById('personName').value);
+                formData.append('contact_phone', document.getElementById('phoneNumber').value);
+                formData.append('address', document.getElementById('address').value);
+                formData.append('description', document.getElementById('companyDescription').value);
+                
+                const logoFile = document.getElementById('companyLogo').files[0];
+                if (logoFile) formData.append('logo', logoFile);
+
+                const result = await fetchData(`/company/profile`, { method: 'PATCH', body: formData }); // Changed PUT to PATCH
+                if (result) { 
+                    showToast('Profile updated successfully!'); 
+                    // CRITICAL: Force profile refetch to update all UI fields
+                    await fetchCompanyProfile(); 
+                }
+            });
+
+            document.getElementById('mobileLogoutButton').addEventListener('click', () => {
+                sessionStorage.removeItem('authToken');
+                window.location.href = 'employerlogin.html';
+            });
+
+            // --- Salary Period Count Controls (UNCHANGED) ---
+            document.getElementById('salaryPeriod').addEventListener('change', function() {
+                const label = document.getElementById('salaryPeriodCountLabel');
+                const period = this.value.toLowerCase();
+                label.textContent = `No. of ${period === 'hourly' ? 'Hours' : period === 'monthly' ? 'Months' : 'Years'}`;
+            });
+
+            document.getElementById('incrementPeriodCount').addEventListener('click', () => {
+                const input = document.getElementById('salaryPeriodCount');
+                input.value = parseInt(input.value) + 1;
+            });
+
+            document.getElementById('decrementPeriodCount').addEventListener('click', () => {
+                const input = document.getElementById('salaryPeriodCount');
+                if (parseInt(input.value) > 1) input.value = parseInt(input.value) - 1;
+            });
+
+            // --- View Applications (UPDATED to use fetchData) ---
+            document.addEventListener('click', async (e) => {
+                if (e.target.closest('.view-applications-btn')) {
+                    const button = e.target.closest('.view-applications-btn');
+                    const jobId = button.dataset.jobId;
+                    const jobTitle = button.dataset.jobTitle;
+                    document.getElementById('applicantJobTitle').textContent = jobTitle;
+                    document.getElementById('applicantsContainer').innerHTML = '<p class="placeholder-text">Loading applicants...</p>'; // Show loading
+                    
+                    // Fetch applicants using relative path
+                    const data = await fetchData(`/applicant/${jobId}`);
+                    
+                    if (data && data.applicants) {
+                        renderApplicants(data.applicants);
+                    } else {
+                        document.getElementById('applicantsContainer').innerHTML = '<p class="placeholder-text text-danger">Could not load applicants.</p>';
+                    }
+                    showSection('applicantsSection');
+                }
+            });
+
+            // --- Review Section Rendering (UNCHANGED) ---
+            const renderReviewSection = () => {
+                const container = document.getElementById('reviewContent');
+                if (!jobDataForReview) return;
+                
+                container.innerHTML = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="review-grid">
+                                <div class="review-item"><strong>Job Title:</strong> ${jobDataForReview.job_title}</div>
+                                <div class="review-item"><strong>Industry:</strong> ${jobDataForReview.industry}</div>
+                                <div class="review-item"><strong>Required Experience:</strong> ${jobDataForReview.required_experience}</div>
+                                <div class="review-item"><strong>Job Type:</strong> ${jobDataForReview.job_type}</div>
+                                <div class="review-item"><strong>Work Location:</strong> ${jobDataForReview.work_location}</div>
+                                <div class="review-item"><strong>Salary Range:</strong> ${jobDataForReview.salary_currency} ${jobDataForReview.salary_min.toLocaleString()} - ${jobDataForReview.salary_max.toLocaleString()} per ${jobDataForReview.salary_period_count} ${jobDataForReview.salary_period.toLowerCase().replace('ly','')}${jobDataForReview.salary_period_count > 1 ? 's' : ''}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 border-start-lg">
+                            <div class="review-grid">
+                                <div class="review-item"><strong>Contact Person:</strong> ${jobDataForReview.posted_by_name}</div>
+                                <div class="review-item"><strong>Contact Email:</strong> ${jobDataForReview.posted_by_email}</div>
+                                <div class="review-item"><strong>Location:</strong> ${jobDataForReview.city}, ${jobDataForReview.state}, ${jobDataForReview.country}</div>
+                            </div>
+                        </div>
+                    </div>
+                    ${jobDataForReview.job_description ? `<div class="mt-4"><h6 class="small fw-bold text-uppercase text-muted pb-1 mb-2 border-bottom">Job Description</h6><p>${jobDataForReview.job_description}</p></div>` : ''}
+                    ${jobDataForReview.responsibilities ? `<div class="mt-4"><h6 class="small fw-bold text-uppercase text-muted pb-1 mb-2 border-bottom">Responsibilities</h6><p>${jobDataForReview.responsibilities.replace(/\n/g, '<br>')}</p></div>` : ''}
+                    ${jobDataForReview.required_skills && jobDataForReview.required_skills.length > 0 ? `<div class="mt-4"><h6 class="small fw-bold text-uppercase text-muted pb-1 mb-2 border-bottom">Primary Skills</h6><div>${jobDataForReview.required_skills.map(skill => `<span class="badge bg-primary me-1">${skill}</span>`).join('')}</div></div>` : ''}
+                    ${jobDataForReview.additional_skills && jobDataForReview.additional_skills.length > 0 ? `<div class="mt-4"><h6 class="small fw-bold text-uppercase text-muted pb-1 mb-2 border-bottom">Secondary Skills</h6><div>${jobDataForReview.additional_skills.map(skill => `<span class="badge bg-secondary me-1">${skill}</span>`).join('')}</div></div>` : ''}
+                `;
+            };
+
+            // --- Initialize App ---
+            fetchCompanyProfile();
+        });
+    </script>
+</body>
+</html>
