@@ -602,21 +602,20 @@
             const applyButton = e.target.closest('.apply-now-btn');
             if (applyButton) {
                 e.preventDefault();
-                
-                // *** REMOVE LOGIN CHECK HERE ***
-                // We now proceed directly to jobApplication.html where the quick-apply form handles non-logged-in users.
-                window.location.href = applyButton.href;
-
-                /* // Original code that checked for login/email in sessionStorage and showed alert:
                 if (sessionStorage.getItem('email')) {
                     window.location.href = applyButton.href;
                 } else {
+                    // Use Bootstrap modal or custom message instead of alert
+                    // alert('Please login to apply for this job.'); // Removed as per instructions
+                    
+                    // Show custom alert instead of native alert
                     showCustomAlert('Please login to apply for this job.', 'warning');
+                    
+                    // Delay redirect to allow user to see the message
                     setTimeout(() => {
                         window.location.href = 'login.html';
                     }, 1500);
                 }
-                */
             }
         });
         

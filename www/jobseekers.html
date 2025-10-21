@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Talent Directory | Filterable Profiles</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Custom scrollbar for better aesthetics */
+        body::-webkit-scrollbar {
+            width: 8px;
+        }
+        body::-webkit-scrollbar-thumb {
+            background-color: #A78BFA;
+            border-radius: 4px;
+        }
+        body::-webkit-scrollbar-track {
+            background-color: #f3f4f6;
+        }
+        /* Custom styles for the filter box shadow */
+        .filter-shadow {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans antialiased text-gray-800">
+
+    <!-- Main Application Container -->
+    <div id="app" class="flex flex-col lg:flex-row min-h-screen">
+        
+        <!-- Filter Sidebar -->
+        <aside id="sidebar" class="w-full lg:w-80 bg-white border-b lg:border-r border-gray-200 p-6 lg:p-8 shrink-0 filter-shadow">
+            <h1 class="text-3xl font-extrabold text-indigo-600 mb-6 flex items-center">
+                Talent Hub
+            </h1>
+            
+            <div id="auth-status" class="mb-6 text-sm text-gray-600">
+                <p>Status: <span id="user-status" class="font-semibold text-red-500">Loading...</span></p>
+            </div>
+
+            <div class="space-y-8">
+                <!-- Skills Filter -->
+                <div>
+                    <label for="skills-filter" class="block text-sm font-bold text-gray-700 mb-2">Filter by Skills</label>
+                    <div class="relative">
+                        <input type="text" id="skills-filter" placeholder="e.g., React, Node.js, Design" 
+                               class="w-full pl-10 pr-4 py-2 border border-indigo-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                        <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                            <i data-lucide="search" class="w-5 h-5"></i>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Experience Filter -->
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label for="experience-filter" class="block text-sm font-bold text-gray-700">Minimum Experience (Years)</label>
+                        <span id="experience-value" class="text-indigo-600 font-extrabold text-lg">0+</span>
+                    </div>
+                    <input type="range" id="experience-filter" min="0" max="20" value="0" step="1"
+                           class="w-full h-2 bg-indigo-100 rounded-lg appearance-none cursor-pointer range-lg transition duration-150">
+                </div>
+
+                <!-- Clear Filters Button -->
+                <button id="clear-filters" class="w-full flex items-center justify-center bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300 transition duration-300 font-medium">
+                    <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i>
+                    Clear Filters
+                </button>
+            </div>
+        </aside>
+
+        <!-- Profile Results Area -->
+        <main class="flex-grow p-6 lg:p-10">
+            <h2 class="text-2xl lg:text-3xl font-bold text-gray-700 mb-8">
+                Found <span id="results-count" class="text-indigo-600">0</span> Profiles
+            </h2>
+
+            <!-- Loading Spinner -->
+            <div id="loading" class="flex justify-center items-center h-48">
+                <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-500"></div>
+                <p class="ml-4 text-indigo-500">Loading profiles...</p>
+            </div>
+
+            <!-- User Cards Grid -->
+            <div id="user-cards-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <!-- Profile Cards will be injected here -->
+            </div>
+
+            <!-- No Results Message -->
+            <div id="no-results" class="hidden text-center p-10 bg-white rounded-xl border border-gray-200 mt-8">
+                <p class="text-xl font-semibold text-gray-500">No matching profiles found.</p>
+                <p class="text-gray-400 mt-2">Try adjusting your skill or experience filters.</p>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, addDoc, setDoc, onSnapshot, collection, query, limit, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables for Firebase
+        let app, db, auth;
+        let userId = null;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        
+        // --- Application State ---
+        let state = {
+            allUsers: [],
+            filteredUsers: [],
+            filters: {
+                skills: '',
+                experience: 0
+            },
+            isAuthReady: false
+        };
+
+        // --- DOM Elements ---
+        const userCardsContainer = document.getElementById('user-cards-container');
+        const resultsCountSpan = document.getElementById('results-count');
+        const loadingDiv = document.getElementById('loading');
+        const noResultsDiv = document.getElementById('no-results');
+        const skillsFilterInput = document.getElementById('skills-filter');
+        const experienceFilterInput = document.getElementById('experience-filter');
+        const experienceValueSpan = document.getElementById('experience-value');
+        const clearFiltersButton = document.getElementById('clear-filters');
+        const userStatusSpan = document.getElementById('user-status');
+
+        /**
+         * Initializes Firebase and handles authentication.
+         */
+        async function setupFirebase() {
+            if (!firebaseConfig) {
+                console.error("Firebase configuration is missing. Cannot fetch user data.");
+                state.isAuthReady = true;
+                loadingDiv.classList.add('hidden');
+                return;
+            }
+
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                // Use the custom token if provided, otherwise sign in anonymously
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                
+                onAuthStateChanged(auth, (user) => {
+                    userId = user ? user.uid : 'anonymous';
+                    state.isAuthReady = true;
+                    userStatusSpan.textContent = user ? `Authenticated (ID: ${userId.substring(0, 8)}...)` : 'Anonymous';
+                    userStatusSpan.classList.remove('text-red-500');
+                    userStatusSpan.classList.add('text-green-600');
+                    console.log("Authentication ready. User ID:", userId);
+                    fetchUserData();
+                });
+
+            } catch (error) {
+                console.error("Firebase setup failed:", error);
+                // No fallback, just ensure loading stops
+                state.isAuthReady = true;
+                loadingDiv.classList.add('hidden');
+            }
+        }
+
+        /**
+         * Fetches user data from the public Firestore collection.
+         */
+        function fetchUserData() {
+            if (!state.isAuthReady || !db) return;
+            
+            loadingDiv.classList.remove('hidden');
+
+            const profileCollectionRef = collection(db, `artifacts/${appId}/public/data/user_profiles`);
+            
+            // Listen for real-time updates (onSnapshot)
+            onSnapshot(profileCollectionRef, (snapshot) => {
+                const fetchedUsers = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    // Ensure skills is an array for filtering and add projectsCount
+                    if (Array.isArray(data.skills)) {
+                        fetchedUsers.push({
+                            ...data,
+                            projectsCount: Array.isArray(data.projects) ? data.projects.length : 0,
+                            id: doc.id // Add Firestore doc ID
+                        });
+                    } else {
+                        console.warn(`Profile ${doc.id} has invalid skills format. Skipping.`);
+                    }
+                });
+
+                if (fetchedUsers.length === 0) {
+                    console.log("No profiles found in the Firestore collection.");
+                }
+
+                state.allUsers = fetchedUsers;
+                applyFilters(); // Apply current filters to the new data
+                loadingDiv.classList.add('hidden');
+
+            }, (error) => {
+                console.error("Error fetching data from Firestore:", error);
+                loadingDiv.classList.add('hidden');
+            });
+        }
+        
+        /**
+         * Renders the user cards in the container.
+         */
+        function renderUsers() {
+            userCardsContainer.innerHTML = '';
+            resultsCountSpan.textContent = state.filteredUsers.length;
+
+            if (state.filteredUsers.length === 0) {
+                noResultsDiv.classList.remove('hidden');
+                return;
+            }
+            noResultsDiv.classList.add('hidden');
+
+            state.filteredUsers.forEach(user => {
+                const card = document.createElement('div');
+                card.className = 'bg-white p-6 rounded-xl border border-gray-100 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.01]';
+                card.innerHTML = `
+                    <div class="flex items-start space-x-4 mb-4">
+                        <img src="${user.profileImageUrl || 'https://placehold.co/100x100/6366F1/ffffff?text=User'}" 
+                             onerror="this.onerror=null;this.src='https://placehold.co/100x100/6366F1/ffffff?text=User';"
+                             alt="${user.fullName}" class="w-16 h-16 rounded-full object-cover border-4 border-indigo-500 shadow-md">
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-900">${user.fullName}</h3>
+                            <p class="text-sm font-semibold text-indigo-600 mt-0.5">${user.experience}+ Years Experience</p>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <p class="text-xs font-semibold uppercase text-gray-500 mb-2">Top Skills</p>
+                        <div class="flex flex-wrap gap-2">
+                            ${user.skills.slice(0, 5).map(skill => 
+                                `<span class="px-3 py-1 bg-indigo-100 text-indigo-800 text-xs font-medium rounded-full">${skill}</span>`
+                            ).join('')}
+                            ${user.skills.length > 5 ? `<span class="text-xs text-gray-500">and ${user.skills.length - 5} more...</span>` : ''}
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 text-sm mb-4">
+                        <div class="flex items-center text-gray-600">
+                            <i data-lucide="folder-open" class="w-4 h-4 mr-2 text-indigo-500"></i>
+                            Projects: <span class="ml-1 font-semibold">${user.projectsCount || 0}</span>
+                        </div>
+                        <div class="flex items-center text-gray-600">
+                            <i data-lucide="mail" class="w-4 h-4 mr-2 text-indigo-500"></i>
+                            Email: <span class="ml-1 font-semibold">${user.email || 'N/A'}</span>
+                        </div>
+                    </div>
+
+                    <a href="${user.resumeUrl || '#'}" target="_blank" 
+                       class="w-full inline-flex justify-center items-center px-4 py-2 mt-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150">
+                        <i data-lucide="download" class="w-4 h-4 mr-2"></i>
+                        View Resume
+                    </a>
+                `;
+                userCardsContainer.appendChild(card);
+            });
+            // Re-initialize Lucide icons for the new content
+            lucide.createIcons();
+        }
+
+        /**
+         * Applies the current filters to the allUsers array.
+         */
+        function applyFilters() {
+            const skillQuery = state.filters.skills.toLowerCase().trim();
+            const minExperience = state.filters.experience;
+
+            state.filteredUsers = state.allUsers.filter(user => {
+                const passesSkillFilter = skillQuery === '' || user.skills.some(skill => 
+                    skill.toLowerCase().includes(skillQuery)
+                );
+                
+                const passesExperienceFilter = user.experience >= minExperience;
+
+                return passesSkillFilter && passesExperienceFilter;
+            });
+
+            renderUsers();
+        }
+
+        // --- Event Listeners ---
+
+        skillsFilterInput.addEventListener('input', (e) => {
+            state.filters.skills = e.target.value;
+            applyFilters();
+        });
+
+        experienceFilterInput.addEventListener('input', (e) => {
+            state.filters.experience = parseInt(e.target.value, 10);
+            experienceValueSpan.textContent = `${e.target.value}+`;
+            applyFilters();
+        });
+
+        clearFiltersButton.addEventListener('click', () => {
+            state.filters.skills = '';
+            state.filters.experience = 0;
+            skillsFilterInput.value = '';
+            experienceFilterInput.value = 0;
+            experienceValueSpan.textContent = '0+';
+            applyFilters();
+        });
+
+        // Initialize the application on load
+        window.onload = () => {
+            lucide.createIcons(); // Initialize icons on static HTML
+            setupFirebase();
+        };
+
+    </script>
+</body>
+</html>
