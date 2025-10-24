@@ -38,7 +38,8 @@
             box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
         }
         
-        .mobile-nav-btn {
+        /* Ensure mobile-nav-btn styling applies to both buttons and links */
+        .mobile-nav-btn, .mobile-nav a.mobile-nav-btn {
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -51,21 +52,21 @@
             transition: all 0.2s ease;
         }
         
-        .mobile-nav-btn i {
+        .mobile-nav-btn i, .mobile-nav a.mobile-nav-btn i {
             font-size: 1.2rem;
             margin-bottom: 0.25rem;
         }
         
-        .mobile-nav-btn span {
+        .mobile-nav-btn span, .mobile-nav a.mobile-nav-btn span {
             font-size: 0.75rem;
             font-weight: 500;
         }
         
-        .mobile-nav-btn.active {
+        .mobile-nav-btn.active, .mobile-nav a.mobile-nav-btn.active {
             color: #0d6efd;
         }
         
-        .mobile-nav-btn:hover {
+        .mobile-nav-btn:hover, .mobile-nav a.mobile-nav-btn:hover {
             color: #0d6efd;
         }
         
@@ -315,6 +316,22 @@
                 width: 100%;
             }
         }
+        
+        /* Initials Avatar Styling */
+        .initials-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: #0d6efd;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-right: 1rem;
+            flex-shrink: 0;
+        }
     </style>
 </head>
 <body>
@@ -329,6 +346,13 @@
     <main class="main-content">
         <!-- Section for posting a new job -->
         <section id="postJobSection" class="content-section active">
+            <!-- NEW: Link to Jobseekers Directory for desktop/tablet users -->
+            <div class="d-none d-md-block mb-4 text-end">
+                <a href="jobseekers.html" class="btn btn-info px-4">
+                    <i class="fas fa-users me-2"></i> Browse Talent Directory
+                </a>
+            </div>
+            
             <div class="card">
                 <div class="card-header bg-white py-3"><h5 class="mb-0">Post a New Job Opening</h5></div>
                 <div class="card-body p-4">
@@ -431,6 +455,11 @@
             <i class="fas fa-briefcase"></i>
             <span>My Jobs</span>
         </button>
+        <!-- The Talent Directory link. It's an <a> tag to redirect, but styled as a button. -->
+        <a href="jobseekers.html" class="mobile-nav-btn">
+            <i class="fas fa-search"></i>
+            <span>Talent Dir</span>
+        </a>
         <button class="mobile-nav-btn" data-section="updateProfileSection">
             <i class="fas fa-user-edit"></i>
             <span>Profile</span>
@@ -676,7 +705,16 @@
                 }).join('');
             };
 
-            // --- Applicant Details Rendering (UNCHANGED) ---
+            // --- Utility function to generate initials ---
+            const getInitials = (fullName) => {
+                if (!fullName) return 'NA';
+                const parts = fullName.split(' ').filter(p => p.length > 0);
+                if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+                if (parts.length > 1) return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+                return 'NA';
+            };
+
+            // --- Applicant Details Rendering (UPDATED) ---
             const renderApplicants = (applicants) => {
                 const container = document.getElementById('applicantsContainer');
                 if (!applicants || applicants.length === 0) {
@@ -709,7 +747,8 @@
                         safeArr = safeArr.filter(item => {
                             if (item === null || typeof item === 'undefined') return false;
                             if (typeof item === 'string' && item.trim() === '') return false;
-                            if (typeof item === 'object' && Object.keys(item).length === 0) return false;
+                            // Keep objects if they have keys, as renderFn will handle content extraction
+                            if (typeof item === 'object' && Object.keys(item).length === 0) return false; 
                             return true;
                         });
                     }
@@ -751,6 +790,35 @@
                     } else {
                         experienceDisplay = 'Not specified';
                     }
+                    
+                    // --- FIX 1: Determine the current role for the header ---
+                    let currentRole = 'Not specified';
+                    const professionalDetails = profile.professionalDetails;
+                    if (Array.isArray(professionalDetails) && professionalDetails.length > 0) {
+                        // Find the current/latest role, prioritizing 'isCurrent'
+                        const currentExp = professionalDetails.find(exp => exp.isCurrent);
+                        if (currentExp && currentExp.title) {
+                            currentRole = currentExp.title;
+                        } else if (professionalDetails[0].title) {
+                            // Fallback to the title of the first item
+                            currentRole = professionalDetails[0].title;
+                        }
+                    }
+
+                    // --- FIX 2: Profile Photo or Initials Avatar ---
+                    const profilePhotoBaseUrl = personal.profilePhoto;
+                    const profilePhotoUrl = profilePhotoBaseUrl && profilePhotoBaseUrl.startsWith('/') ? `${BASE_URL}${profilePhotoBaseUrl}` : profilePhotoBaseUrl;
+                    const initials = getInitials(personal.fullName);
+                    
+                    let avatarHtml = '';
+                    if (profilePhotoUrl) {
+                         // Attempt to load image, use onerror to fallback to initials
+                        avatarHtml = `<img src="${profilePhotoUrl}" class="rounded-circle me-3" width="50" height="50" alt="Applicant Photo" style="object-fit:cover;" onerror="this.outerHTML='<div class=\\'initials-avatar\\'>${initials}</div>';">`;
+                    } else {
+                        // Default to initials if no URL is present
+                        avatarHtml = `<div class="initials-avatar">${initials}</div>`;
+                    }
+
 
                     const educationItems = formatArrayData(profile.education, (edu) => {
                         if (!edu || (!edu.degree && !edu.fieldOfStudy && !edu.institution)) return '';
@@ -761,47 +829,76 @@
                         </div>`;
                     });
 
-                    const experienceItems = formatArrayData(profile.workExperience, (exp) => {
-                        if (!exp || (!exp.company && !exp.position && !exp.duration)) return '';
+                    // --- Work Experience Logic ---
+                    const experienceItems = formatArrayData(profile.workExperience || profile.professionalDetails, (exp) => {
+                        if (!exp || (!exp.company && !exp.title)) return ''; 
+                        const position = exp.title || 'Position not specified'; 
+                        const company = exp.company || 'Company not specified';
+
+                        let durationText = '';
+                        if (exp.startDate || exp.endDate) {
+                            const start = exp.startDate ? exp.startDate.split('-')[0] : 'Present';
+                            const end = exp.isCurrent ? 'Present' : (exp.endDate ? exp.endDate.split('-')[0] : 'End Date');
+                            durationText = `${start} - ${end}`;
+                        } else if (exp.isCurrent) {
+                             durationText = 'Current';
+                        }
+                        
                         return `<div class="mb-2">
-                            <strong>${exp.position || 'Position not specified'}</strong> at ${exp.company || 'Company not specified'}<br>
-                            <span class="text-muted">${exp.duration || 'Duration not specified'}</span>
+                            <strong>${position}</strong> at ${company}<br>
+                            <span class="text-muted">${durationText}</span>
                             ${exp.description ? `<br><small>${exp.description}</small>` : ''}
                         </div>`;
                     });
 
                     const skillsItems = formatArrayData(profile.skills, (skill) => {
-                        if (!skill || (typeof skill === 'string' && skill.trim() === '')) return '';
-                        return `<span class="badge bg-light text-dark me-1 mb-1">${skill}</span>`;
+                        if (!skill) return '';
+                        const skillName = skill.name || skill.skillName || skill; 
+                        if (typeof skillName !== 'string' || skillName.trim() === '') return '';
+                        return `<span class="badge bg-light text-dark me-1 mb-1">${skillName}</span>`;
                     });
 
+                    // --- Project logic to check for 'name' first, and include 'role' ---
                     const projectsItems = formatArrayData(profile.projects, (project) => {
-                        if (!project || (!project.title && !project.description)) return '';
+                        if (!project || (!project.title && !project.name && !project.description && !project.role)) return '';
+                        const projectTitle = project.name || project.title || 'Untitled Project';
+                        const projectRole = project.role ? `<span class="text-info">(${project.role})</span>` : '';
+                        
                         return `<div class="mb-2">
-                            <strong>${project.title || 'Untitled Project'}</strong>
+                            <strong>${projectTitle}</strong> ${projectRole}
                             ${project.description ? `<br><small>${project.description}</small>` : ''}
                         </div>`;
                     });
 
                     const certificationsItems = formatArrayData(profile.certifications, (cert) => {
-                        if (!cert || (typeof cert === 'string' && cert.trim() === '')) return '';
-                        return `<div class="mb-1"><i class="fas fa-certificate text-warning me-1"></i>${cert}</div>`;
+                        if (!cert) return '';
+                        const certName = cert.name || cert.certification || cert;
+                        if (typeof certName !== 'string' || certName.trim() === '') return '';
+                        return `<div class="mb-1"><i class="fas fa-certificate text-warning me-1"></i>${certName}</div>`;
                     });
 
                     const languagesItems = formatArrayData(profile.languages, (lang) => {
-                        if (!lang || (typeof lang === 'string' && lang.trim() === '')) return '';
-                        return `<span class="badge bg-light text-dark me-1 mb-1">${lang}</span>`;
+                        if (!lang) return '';
+                        const langName = lang.name || lang;
+                        const proficiency = lang.proficiency ? ` (${lang.proficiency})` : '';
+                        if (typeof langName !== 'string' || langName.trim() === '') return '';
+                        return `<span class="badge bg-light text-dark me-1 mb-1">${langName}${proficiency}</span>`;
                     });
-
+                    
                     const awardsItems = formatArrayData(profile.awards, (award) => {
-                        if (!award || (typeof award === 'string' && award.trim() === '')) return '';
-                        return `<div class="mb-1"><i class="fas fa-trophy text-warning me-1"></i>${award}</div>`;
+                        if (!award) return '';
+                        const awardText = award.title || award.name || award;
+                        if (typeof awardText !== 'string' || awardText.trim() === '') return '';
+                        return `<div class="mb-1"><i class="fas fa-trophy text-warning me-1"></i>${awardText}</div>`;
                     });
 
                     const publicationsItems = formatArrayData(profile.publications, (pub) => {
-                        if (!pub || (typeof pub === 'string' && pub.trim() === '')) return '';
-                        return `<div class="mb-1"><i class="fas fa-book text-info me-1"></i>${pub}</div>`;
+                        if (!pub) return '';
+                        const pubText = pub.title || pub.name || pub;
+                        if (typeof pubText !== 'string' || pubText.trim() === '') return '';
+                        return `<div class="mb-1"><i class="fas fa-book text-info me-1"></i>${pubText}</div>`;
                     });
+
 
                     const referencesItems = formatArrayData(profile.references, (ref) => {
                         if (!ref || (typeof ref === 'string' && ref.trim() === '')) return '';
@@ -819,20 +916,16 @@
                         expectedCtcText = parseFloat(ctc.expected).toLocaleString('en-IN', { style: 'currency', currency: currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }); 
                     }
                     
-                    const profilePhotoBaseUrl = personal.profilePhoto;
-                    const profilePhotoUrl = profilePhotoBaseUrl && profilePhotoBaseUrl.startsWith('/') ? `${BASE_URL}${profilePhotoBaseUrl}` : profilePhotoBaseUrl || 'https://placehold.co/60x60/EFEFEF/AAAAAA&text=NA';
-
-
                     return `
                     <div class="card mb-2 shadow-sm">
                         <div class="card-header bg-white p-3" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#${uniqueId}" aria-expanded="false" aria-controls="${uniqueId}">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div class="d-flex align-items-center">
-                                    <img src="${profilePhotoUrl}" class="rounded-circle me-3" width="50" height="50" alt="Applicant Photo" style="object-fit:cover;">
+                                    ${avatarHtml}
                                     <div>
                                         <h6 class="mb-0">${personal.fullName || 'N/A'}</h6>
                                         <small class="text-muted">
-                                            <i class="fas fa-briefcase fa-fw me-1"></i> ${experienceDisplay}
+                                            <i class="fas fa-briefcase fa-fw me-1"></i> ${currentRole}
                                         </small>
                                     </div>
                                 </div>

@@ -10,50 +10,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary-color: #0d6efd; /* Consistent primary color */
-            --dark-text: #343a40;
-            --light-bg: #f4f7fc;
-        }
-
         body {
-            background-color: var(--light-bg);
+            background-color: #f4f7fc;
             font-family: 'Poppins', sans-serif;
-            padding-top: 60px; /* Space for the fixed header bar */
         }
-        
-        /* --- Fixed Header Bar --- */
-        #mobile-header-bar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1050;
-            padding: 10px 15px;
-            padding-top: 35px; /* Requested top margin */
-            display: flex;
-            align-items: center;
-            background-color: #fff; /* White background for header */
-            box-shadow: 0 1px 5px rgba(0,0,0,0.1);
-        }
-
-        #back-button {
-            background: none;
-            border: none;
-            color: var(--dark-text);
-            font-size: 1.5rem;
-            padding: 0;
-            margin-right: 15px;
-            cursor: pointer;
-        }
-
-        .header-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--dark-text);
-        }
-        
-        /* --- Card and Content Styles --- */
         .card {
             border-radius: 10px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
@@ -72,114 +32,103 @@
         .section-title {
             font-size: 1.1rem;
             font-weight: 600;
-            color: var(--dark-text);
+            color: #343a40;
             margin-bottom: 1rem;
             padding-bottom: 0.5rem;
-            border-bottom: 2px solid var(--primary-color);
+            border-bottom: 2px solid #0d6efd;
             display: inline-block;
+        }
+        .user-profile-card .list-group-item {
+            border: none;
+            padding: 0.75rem 0;
         }
         .detail-item {
             display: flex;
-            align-items: flex-start;
             margin-bottom: 0.75rem;
         }
         .detail-item .icon {
             font-size: 1rem;
-            color: var(--primary-color);
+            color: #0d6efd;
             width: 25px;
             text-align: center;
-            flex-shrink: 0;
-            padding-top: 2px;
         }
         .detail-item .text {
             font-weight: 500;
             color: #495057;
-            flex-grow: 1;
+        }
+        #applyBtn {
+            font-size: 1.1rem;
+            padding: 0.75rem;
         }
         .skill-badge {
             font-size: 0.8rem;
             font-weight: 500;
         }
-        
-        /* New Application Form Styles */
-        .application-form h5 {
-            font-weight: 600;
-            margin-bottom: 1rem;
-            color: var(--dark-text);
-        }
-        
-        /* Responsive adjustments for the sticky application column */
-        @media (min-width: 992px) {
-            .app-column-sticky {
-                position: sticky;
-                top: 75px; /* Offset below fixed header */
-            }
-        }
     </style>
 </head>
 <body>
-    <!-- FIXED HEADER BAR -->
-    <div id="mobile-header-bar">
-        <button id="back-button" onclick="history.back()">
-            <i class="fas fa-arrow-left"></i>
-        </button>
-        <span class="header-title">Job Application</span>
-    </div>
+    <!-- Header/Navbar -->
+    <header>
+      <nav class="navbar navbar-expand-lg navbar-dark bg-dark py-2">
+        <div class="container">
+          <a class="navbar-brand d-flex align-items-center" href="index.html">
+            <img src="images/logo.png" alt="Hitaishi Careers Logo" height="40" class="me-2">
+            <span class="fw-bold">Hitaishi Careers</span>
+          </a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+              <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+              <li class="nav-item"><a class="nav-link" href="jobs.html">Jobs</a></li>
+            </ul>
+          </div>
+        </div>
+      </nav>
+    </header>
 
-    <main class="container py-4">
+    <main class="container py-5">
         <div id="page-content">
             <!-- Loading Spinner -->
-            <div class="text-center p-5"><div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status"><span class="visually-hidden">Loading...</span></div></div>
+            <div class="text-center p-5"><div class="spinner-border" style="width: 3rem; height: 3rem;" role="status"><span class="visually-hidden">Loading...</span></div></div>
         </div>
     </main>
 
-    <!-- Bootstrap JS Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             const pageContent = document.getElementById('page-content');
-            const urlParams = new URLSearchParams(window.location.search);
-            const jobId = urlParams.get('jobId');
             
-            let isUserLoggedIn = false;
-            let currentJob = null;
-            let currentUser = null;
-
             // --- Helper Functions ---
-            const showCustomMessage = (message, type = 'info', targetId = 'apply-message') => {
-                const target = document.getElementById(targetId);
-                if (!target) return;
-
-                const alertClass = type === 'success' ? 'alert-success' : type === 'danger' ? 'alert-danger' : 'alert-info';
-                target.innerHTML = `<div class="alert ${alertClass} alert-dismissible fade show" role="alert">${message}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>`;
-            };
-
-            const renderError = (message, title = "Error") => {
+            const renderError = (message, showLoginButton = false) => {
+                let buttonHtml = showLoginButton ? `<a href="login.html" class="btn btn-primary mt-3">Go to Login</a>` : '';
                 pageContent.innerHTML = `
                     <div class="card p-5 text-center">
-                        <h3 class="text-danger"><i class="fas fa-exclamation-triangle me-2"></i>${title}</h3>
+                        <h3 class="text-danger"><i class="fas fa-exclamation-triangle me-2"></i>Error</h3>
                         <p class="text-muted fs-5">${message}</p>
-                        <button onclick="history.back()" class="btn btn-primary mt-3"><i class="fas fa-arrow-left me-2"></i>Go Back to Jobs</button>
+                        ${buttonHtml}
                     </div>
                 `;
             };
 
             const formatSalary = (job) => {
                 if (job.salary_min && job.salary_max) {
-                    return `${job.salary_currency || '₹'} ${job.salary_min.toLocaleString()} - ${job.salary_max.toLocaleString()} per ${job.salary_period || 'annum'}`;
+                    return `${job.salary_currency} ${job.salary_min.toLocaleString()} - ${job.salary_max.toLocaleString()} per ${job.salary_period || 'annum'}`;
                 }
                 return 'Not Disclosed';
             };
 
             const formatSkills = (skills, title) => {
+                 // Check if skills is a string, if so, parse it
                  const skillArray = skills && typeof skills === 'string' ? JSON.parse(skills) : skills;
                  
                 if (!Array.isArray(skillArray) || skillArray.length === 0) return '';
+                // Ensure array elements are strings before mapping (prevents error if data structure is slightly off)
                 const safeSkillArray = skillArray.map(s => typeof s === 'object' && s !== null ? s.name : s).filter(Boolean);
 
                 return `
                     <h3 class="section-title mt-4">${title}</h3>
-                    <div class="d-flex flex-wrap gap-2">
+                    <div>
                         ${safeSkillArray.map(skill => `<span class="badge bg-secondary skill-badge me-1 mb-1">${skill}</span>`).join('')}
                     </div>
                 `;
@@ -187,103 +136,24 @@
 
             const getProfessionalSummary = (details) => {
                 if(!details || details.length === 0) return 'No professional details provided.';
+                
+                // Assuming professionalDetails is an array of objects
                 const latest = details[0]; 
+                
+                // Check for job title field names (it might be `title` or `designation` depending on profile page structure)
                 const jobTitle = latest.title || latest.designation;
+                
                 if (jobTitle && latest.company) {
                      return `${jobTitle} at ${latest.company}`;
                 }
+
                 return 'Professional details available.';
             }
 
-            // --- Fetching Data and Authentication Check ---
-            async function fetchAuthenticatedData(url) {
-                const token = localStorage.getItem('jwt');
-                const headers = {};
-                if (token) {
-                    headers['Authorization'] = `Bearer ${token}`;
-                }
-
-                // We use credentials: 'include' to handle the cookie-based web flow
-                const response = await fetch(url, { 
-                    headers: headers, 
-                    credentials: 'include' 
-                });
-                
-                return response;
-            }
-            
-            // --- Page Rendering Functions ---
-            function renderApplicationForm(job, user) {
+            // --- Page Rendering Function ---
+            function renderApplicationPage(job, user) {
+                const { personalDetails, professionalDetails, resume } = user;
                 const fullLocation = [job.city, job.state, job.country, job.zip_code].filter(Boolean).join(', ');
-                
-                // Determine if user is logged in and pre-fill data
-                isUserLoggedIn = !!user; // simple boolean check
-                const p = user ? user.personalDetails : {};
-                const resumeName = user && user.resume && user.resume.name ? user.resume.name : 'No file chosen';
-                const resumeUrl = user && user.resume && user.resume.url ? user.resume.url : null;
-                const resumeWarning = isUserLoggedIn && !resumeUrl ? 'You must upload a resume to complete your profile.' : '';
-                
-                let applicationSummaryHTML = '';
-                let applicationFormHTML = '';
-
-                if (isUserLoggedIn) {
-                    // Logged-in view: Shows profile summary and confirmation button
-                    applicationSummaryHTML = `
-                        <h3 class="section-title">Your Profile Snapshot</h3>
-                        <div class="d-flex align-items-center mb-3">
-                            <img src="${p.profilePhoto || 'https://placehold.co/60x60/0d6efd/ffffff&text=You'}" class="rounded-circle me-3" width="60" height="60">
-                            <div>
-                                <h5 class="mb-0">${p.fullName || 'N/A'}</h5>
-                                <p class="text-muted mb-0">${p.email || 'N/A'}</p>
-                            </div>
-                        </div>
-                        <ul class="list-group list-group-flush mb-3">
-                            <li class="list-group-item"><strong>Phone:</strong> ${p.phone || 'N/A'}</li>
-                            <li class="list-group-item"><strong>Professional Summary:</strong> ${getProfessionalSummary(user.professionalDetails)}</li>
-                            <li class="list-group-item"><strong>Resume:</strong> ${resumeUrl ? `<a href="${resumeUrl}" target="_blank">${resumeName} <i class="fas fa-external-link-alt fa-xs"></i></a>` : `<span class="text-danger">Missing</span>`}</li>
-                        </ul>
-                        ${resumeWarning ? `<div class="alert alert-warning small">${resumeWarning}</div>` : ''}
-                        <p class="text-muted small">By clicking "Confirm & Apply", your full profile will be sent to the employer.</p>
-                        <div class="d-grid">
-                            <button id="applyBtn" class="btn btn-primary btn-lg" ${!resumeUrl ? 'disabled' : ''}>
-                                <i class="fas fa-paper-plane me-2"></i>Confirm & Apply
-                            </button>
-                        </div>
-                    `;
-                    applicationFormHTML = ''; // No form needed for logged-in users (they apply with full profile)
-                    
-                } else {
-                    // Logged-out view: Shows minimal application form
-                    applicationSummaryHTML = `
-                        <h3 class="section-title">Quick Apply</h3>
-                        <p class="text-muted">You are not logged in. Fill out these quick details to apply instantly.</p>
-                    `;
-                    applicationFormHTML = `
-                        <form id="quickApplyForm" class="application-form">
-                            <div class="mb-3">
-                                <label for="fullName" class="form-label">Full Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="fullName" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
-                                <input type="email" class="form-control" id="email" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="phone" class="form-label">Phone Number <span class="text-danger">*</span></label>
-                                <input type="tel" class="form-control" id="phone" required>
-                            </div>
-                            <div class="mb-4">
-                                <label for="resumeFile" class="form-label">Upload Resume <span class="text-danger">*</span></label>
-                                <input class="form-control" type="file" id="resumeFile" accept=".pdf,.doc,.docx" required>
-                            </div>
-                            <div class="d-grid">
-                                <button type="submit" id="quickApplyBtn" class="btn btn-primary btn-lg">
-                                    <i class="fas fa-paper-plane me-2"></i>Submit Application
-                                </button>
-                            </div>
-                        </form>
-                    `;
-                }
 
                 pageContent.innerHTML = `
                     <div class="row g-4">
@@ -314,160 +184,240 @@
                                     
                                     ${formatSkills(job.required_skills, 'Required Skills')}
                                     ${formatSkills(job.additional_skills, 'Additional Skills')}
+
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Right Column: Application/Profile -->
+                        <!-- Right Column: User Summary & Apply Button -->
                         <div class="col-lg-5">
-                            <div class="card app-column-sticky">
+                            <div class="card user-profile-card position-sticky" style="top: 20px;">
                                 <div class="card-body p-4">
-                                    <div id="apply-section">
-                                        ${applicationSummaryHTML}
-                                        ${applicationFormHTML}
+                                    <h3 class="section-title">Your Application</h3>
+                                    <div class="d-flex align-items-center mb-3">
+                                        <img src="${personalDetails.profilePhoto || 'https://placehold.co/60x60/0d6efd/ffffff&text=You'}" class="rounded-circle me-3" width="60" height="60">
+                                        <div>
+                                            <h5 class="mb-0">${personalDetails.fullName || 'N/A'}</h5>
+                                            <p class="text-muted mb-0">${personalDetails.email || 'N/A'}</p>
+                                        </div>
                                     </div>
-                                    <div id="apply-message" class="mt-3"></div>
+                                    <ul class="list-group list-group-flush mb-3">
+                                        <li class="list-group-item"><strong>Phone:</strong> ${personalDetails.phone || 'N/A'}</li>
+                                        <li class="list-group-item"><strong>Professional Summary:</strong> ${getProfessionalSummary(professionalDetails)}</li>
+                                        ${resume ? `<li class="list-group-item"><strong>Resume:</strong> <a href="${resume.url}" target="_blank">${resume.name} <i class="fas fa-external-link-alt fa-xs"></i></a></li>` : '<li class="list-group-item text-warning"><strong>Resume:</strong> Not Uploaded</li>'}
+                                    </ul>
+
+                                    <div id="apply-section">
+                                        <p class="text-muted small">By clicking "Confirm & Apply", your full profile will be sent to the employer.</p>
+                                        <div class="d-grid">
+                                            <button id="applyBtn" class="btn btn-primary btn-lg">
+                                                <i class="fas fa-paper-plane me-2"></i>Confirm & Apply
+                                            </button>
+                                        </div>
+                                        <div id="apply-message" class="mt-3"></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 `;
                 
-                if (isUserLoggedIn) {
-                    document.getElementById('applyBtn').addEventListener('click', () => handleApply(true));
-                } else {
-                    document.getElementById('quickApplyForm').addEventListener('submit', (e) => {
-                        e.preventDefault();
-                        handleApply(false);
-                    });
-                }
+                document.getElementById('applyBtn').addEventListener('click', handleApply);
             }
 
-            // --- Apply Logic (Handles both logged-in and quick apply) ---
-            async function handleApply(isAuth) {
-                const applyBtn = document.getElementById(isAuth ? 'applyBtn' : 'quickApplyBtn');
+            // --- Apply Logic (CRITICAL UPDATE for Mobile/Website compatibility) ---
+            async function handleApply() {
+                const applyBtn = document.getElementById('applyBtn');
                 const applyMessage = document.getElementById('apply-message');
-                applyMessage.innerHTML = '';
-                
+                const urlParams = new URLSearchParams(window.location.search);
+                const jobId = urlParams.get('jobId');
+                const token = localStorage.getItem('jwt'); // Check localStorage for token (Mobile App)
+
                 applyBtn.disabled = true;
                 applyBtn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Applying...`;
                 
-                let apiEndpoint = isAuth ? 'https://www.winjob.in/api/applicant/apply' : 'https://www.winjob.in/api/applicant/quick-apply';
-                const token = localStorage.getItem('jwt');
-                
+                // Build headers: use Authorization header if token is found, otherwise rely on cookie (credentials: 'include')
                 const headers = { 'Content-Type': 'application/json' };
-                let body = { jobId: jobId };
-
-                // 1. Logged-in Application (sends jobId only, backend uses user ID from token)
-                if (isAuth) {
-                    if (token) {
-                        headers['Authorization'] = `Bearer ${token}`;
-                    }
-                    // body is just { jobId }
-                } 
-                // 2. Quick Application (needs form data and file upload)
-                else { 
-                    const name = document.getElementById('fullName').value;
-                    const email = document.getElementById('email').value;
-                    const phone = document.getElementById('phone').value;
-                    const resumeFile = document.getElementById('resumeFile').files[0];
-
-                    if (!name || !email || !phone || !resumeFile) {
-                        showCustomMessage("Please fill all required fields and upload a resume.", 'danger');
-                        applyBtn.disabled = false;
-                        applyBtn.innerHTML = `<i class="fas fa-paper-plane me-2"></i>Submit Application`;
-                        return;
-                    }
-                    
-                    // NOTE: Quick Apply requires a multipart form submission for the file, 
-                    // which is complex to manage here. For this client-side implementation, 
-                    // we simulate a success/failure or simplify the quick apply process 
-                    // by showing a confirmation message. A real Quick Apply endpoint 
-                    // would require a backend update to handle the resume file upload 
-                    // to cloud storage (like S3/GCP) before processing the application.
-
-                    // Since we cannot modify the API to accept file uploads directly in this quick flow,
-                    // we will show a success message and prompt the user to register/login for full functionality.
-                    
-                    // --- SIMULATION FOR FRONTEND DEMO ---
-                    setTimeout(() => {
-                        document.getElementById('apply-section').innerHTML = `
-                            <div class="alert alert-success text-center">
-                                <h4><i class="fas fa-check-circle"></i> Quick Application Submitted!</h4>
-                                <p class="mb-0">We have received your application details.</p>
-                                <p class="mb-0 small mt-2">To track your application and access full features, please <a href="login.html" class="alert-link">register or log in</a>.</p>
-                            </div>
-                        `;
-                    }, 1500);
-                    return; 
-                    // --- END SIMULATION ---
+                if (token) {
+                    // Mobile app flow: Use Bearer token from localStorage
+                    headers['Authorization'] = `Bearer ${token}`;
                 }
-
-
-                // --- LOGGED-IN APPLICATION FETCH CALL ---
+                
                 try {
-                    const response = await fetch(apiEndpoint, {
+                    const response = await fetch('https://www.winjob.in/api/applicant/apply', {
                         method: 'POST',
                         headers: headers,
+                        // CRITICAL: Keep credentials: 'include' for the web browser/cookie flow.
+                        // The middleware will handle either the header or the cookie.
                         credentials: 'include', 
-                        body: JSON.stringify(body)
+                        body: JSON.stringify({ jobId })
                     });
                     const result = await response.json();
 
                     if (response.status === 401 || response.status === 403) {
+                         // Clear local token on auth failure and redirect
                          localStorage.removeItem('jwt');
-                         showCustomMessage("Application failed: Your session has expired. Please log in again.", 'danger');
-                         setTimeout(() => window.location.href = 'login.html', 1500);
-                         return;
+                         throw new Error("Application failed: Your session has expired. Please log in again.");
                     }
                     if (!response.ok) throw new Error(result.error || 'An unknown error occurred.');
 
                     document.getElementById('apply-section').innerHTML = `
                         <div class="alert alert-success text-center">
                             <h4><i class="fas fa-check-circle"></i> Applied Successfully!</h4>
-                            <p class="mb-0">The employer has received your application and full profile.</p>
+                            <p class="mb-0">The employer has received your application.</p>
                         </div>
                     `;
                 } catch (error) {
-                    showCustomMessage(error.message, 'danger');
+                    applyMessage.innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
                     applyBtn.disabled = false;
-                    applyBtn.innerHTML = isAuth ? `<i class="fas fa-paper-plane me-2"></i>Confirm & Apply` : `<i class="fas fa-paper-plane me-2"></i>Submit Application`;
+                    applyBtn.innerHTML = `<i class="fas fa-paper-plane me-2"></i>Confirm & Apply`;
                 }
             }
 
+            // --- Initial Page Load Logic (CRITICAL UPDATE for Mobile/Website compatibility) ---
+            async function fetchAuthenticatedData(url) {
+                const token = localStorage.getItem('jwt'); // Check localStorage for token (Mobile App)
 
-            // --- Initialization ---
+                // Build headers: use Authorization header if token is found, otherwise rely on cookie (credentials: 'include')
+                const headers = {};
+                if (token) {
+                    // Mobile app flow: Use Bearer token from localStorage
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+
+                const response = await fetch(url, { 
+                    headers: headers, 
+                    // CRITICAL: Keep credentials: 'include' for web browser/cookie flow.
+                    credentials: 'include' 
+                });
+                
+                return response;
+            }
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const jobId = urlParams.get('jobId');
+            
             if (!jobId) {
-                renderError("No job specified. Go back and select a job.", "Invalid Request");
+                renderError("No job specified. Go back and select a job.");
                 return;
             }
 
             try {
-                // Fetch Job Data (public)
+                // Fetch Job Data (public, no auth needed)
                 const jobRes = await fetch(`https://www.winjob.in/api/jobs/${jobId}`);
                 if (!jobRes.ok) throw new Error('Job not found or could not be loaded.');
-                currentJob = (await jobRes.json()).job;
-
-                // Attempt to Fetch User Profile (to check login status and get data)
+                
+                // Fetch User Profile (uses combined auth logic)
                 const userRes = await fetchAuthenticatedData(`https://www.winjob.in/api/profile/full`);
 
-                if (userRes.ok) {
-                    // User is logged in, use their data
-                    currentUser = await userRes.json();
-                    isUserLoggedIn = true;
-                } else {
-                    // User is not logged in (401/403 or other error), proceed with Quick Apply flow
-                    currentUser = null;
-                    isUserLoggedIn = false;
+                if (userRes.status === 401) {
+                    // Redirect if the profile fetch fails due to missing/expired cookie OR token
+                    renderError("Your session has expired or you are not logged in.", true);
+                    localStorage.removeItem('jwt'); // Clean up any stale local token
+                    return;
                 }
                 
-                renderApplicationForm(currentJob, currentUser);
+                if (!userRes.ok) throw new Error('Could not load your user profile.');
+
+                const { job } = await jobRes.json();
+                const user = await userRes.json();
+                
+                renderApplicationPage(job, user);
 
             } catch (error) {
-                // General error during fetch (e.g., network error)
-                renderError(error.message, "Loading Error");
+                renderError(error.message);
             }
         });
     </script>
+
+    <!-- Footer -->
+    <footer class="text-white py-5">
+        <div class="container">
+        <div class="row g-4">
+            <div class="col-lg-4 col-md-6">
+            <div class="mb-4">
+                <img src="images/logo.png" alt="Hitaishi Careers Logo" height="40" class="me-2">
+                <span class="fw-bold fs-4">Hitaishi Careers</span>
+            </div>
+            <p class="mb-4">Connecting talented professionals with their dream jobs since 2022. Our mission is to make job searching efficient and effective for everyone.</p>
+            <div class="d-flex gap-3">
+                <a href="#" class="text-white"><i class="fab fa-facebook-f fa-lg"></i></a>
+                <a href="#" class="text-white"><i class="fab fa-twitter fa-lg"></i></a>
+                <a href="#" class="text-white"><i class="fab fa-linkedin-in fa-lg"></i></a>
+                <a href="#" class="text-white"><i class="fab fa-instagram fa-lg"></i></a>
+            </div>
+            </div>
+            
+            <div class="col-lg-2 col-md-6">
+            <h5 class="mb-4">Quick Links</h5>
+            <ul class="list-unstyled">
+                <li class="mb-2"><a href="index.html" class="text-white-50">Home</a></li>
+                <li class="mb-2"><a href="jobs.html" class="text-white-50">Browse Jobs</a></li>
+                <li class="mb-2"><a href="employer.html" class="text-white-50">For Employers</a></li>
+                <li class="mb-2"><a href="about.html" class="text-white-50">About Us</a></li>
+                <li class="mb-2"><a href="contact.html" class="text-white-50">Contact</a></li>
+            </ul>
+            </div>
+            
+            <div class="col-lg-3 col-md-6">
+            <h5 class="mb-4">Job Seeker Resources</h5>
+            <ul class="list-unstyled">
+                <li class="mb-2"><a href="resumebuild.html" class="text-white-50">Resume Builder</a></li>
+                <li class="mb-2"><a href="preparation.html" class="text-white-50">Interview Tips</a></li>
+                <li class="mb-2"><a href="careerbooster.html" class="text-white-50">Career Advice</a></li>
+                <li class="mb-2"><a href="featuredprofile.html" class="text-white-50">Featured Profile</a></li>
+                <li class="mb-2"><a href="tutu.html" class="text-white-50">Apply with AI</a></li>
+            </ul>
+            </div>
+            
+            <div class="col-lg-3 col-md-6">
+            <h5 class="mb-4">Contact Us</h5>
+            <ul class="list-unstyled">
+                <li class="mb-3 d-flex align-items-start">
+                <i class="fas fa-map-marker-alt me-3 mt-1"></i>
+                <span class="text-white-50">985 pragathi nagar, Pragathi Nagar, Hyderabad, TS 500090</span>
+                </li>
+                <li class="mb-3 d-flex align-items-center">
+                <i class="fas fa-phone me-3"></i>
+                <a href="tel:+919876543210" class="text-white-50">+91 99087 93602</a>,  
+                <a href="tel:+919876543210" class="text-white-50">+91 87901 70525</a>
+                </li>
+                <li class="mb-3 d-flex align-items-center">
+                <i class="fas fa-envelope me-3"></i>
+                <a href="mailto:info@hitashicareers.com" class="text-white-50">info@hitashicareers.com</a>
+                </li>
+            </ul>
+            </div>
+        </div>
+        
+        <hr class="my-5">
+        
+        <div class="row align-items-center">
+            <div class="col-md-6 text-center text-md-start">
+            <p class="mb-0">&copy; 2025 Hitaishi Careers. All rights reserved.</p>
+            </div>
+            <div class="col-md-6 text-center text-md-end">
+            <a href="PrivacyPolicy.html" class="text-white-50 me-3">Privacy Policy</a>
+            <a href="Terms-Conditions.html" class="text-white-50 me-3">Terms of Service</a>
+            <a href="cookiesPolicy.html" class="text-white-50">Cookie Policy</a>
+            </div>
+        </div>
+        </div>
+        <style>
+            footer {
+            background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+        }
+        
+        footer a {
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        footer a:hover {
+            color: var(--secondary-color) !important;
+        }
+        </style>
+    </footer>
+    
 </body>
 </html>

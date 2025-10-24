@@ -232,8 +232,8 @@
 <!-- CAPACITOR NATIVE SOCIAL LOGIN IMPLEMENTATION -->
 <!-- ========================================================== -->
 <script type="module">
-  // 💡 CRITICAL: Define the Web Client ID for Capgo initialization (must match GOOGLE_CLIENT_ID in .env)
-  const WEB_CLIENT_ID_FOR_NATIVE_INIT = "62866830906-89e5aqkrpnsjs0dri6hsss239b5rpdd9.apps.googleusercontent.com"; 
+  // 💡 CRITICAL: Define the Web Client ID for Capgo initialization (from your .env)
+  const WEB_CLIENT_ID_FOR_VERIFICATION = "62866830906-89e5aqkrpnsjs0dri6hsss239b5rpdd9.apps.googleusercontent.com"; 
   const BACKEND_GOOGLE_AUTH_URL = "https://www.winjob.in/api/auth/google"; // Your backend endpoint
   
   // Using try/catch for the import ensures the app doesn't crash if this is run outside Capacitor
@@ -253,22 +253,25 @@
     if (window.location.protocol.startsWith('http')) {
         return window.location.origin;
     }
-    // For Capacitor/native app in WebView, the origin is typically 'file://' or 'capacitor://localhost'
+    // For Capacitor/native app in WebView, the origin is typically 'file://' 
+    // or 'capacitor://localhost' depending on the setup. We add 'file://' to 
+    // the list of origins for safety in the Google Console.
     return window.location.protocol + '//' + window.location.hostname;
   }
 
   async function sendTokenToBackend(idToken) {
     try {
-        // NOTE: No 'credentials: "include"' is used here, as mobile apps use token in response body
+        // MODIFIED: Removed credentials: 'include'.
         const res = await fetch(BACKEND_GOOGLE_AUTH_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ token: idToken }),
+            // Removed: credentials: "include", 
         });
 
         const result = await res.json();
         if (res.ok) {
-            // Check for and store token in localStorage (mobile flow)
+            // MODIFIED: Check for and store token in localStorage
             const token = result.token; 
             if (token) {
                 localStorage.setItem('jwt', token); // Store token
@@ -278,8 +281,7 @@
                 throw new Error("Login successful, but no token received from server.");
             }
         } else {
-            // Error is likely due to the server rejecting the token (e.g., audience mismatch)
-            showCustomAlert("❌ " + (result.error || "Google sign-in failed on server. Check server logs for audience mismatch."), 'danger');
+            showCustomAlert("❌ " + (result.error || "Google sign-in failed on server."), 'danger');
         }
     } catch (error) {
         console.error("Error sending Google token to backend:", error);
@@ -297,15 +299,15 @@
     
     showCustomAlert("Initiating native Google Sign-In...", 'info');
     
-    // Initialize the plugin with the web client ID 
+    // Initialize the plugin with the web client ID (essential for Capgo/Google SDK)
     try {
         await SocialLogin.initialize({
             google: {
-                // Must be the WEB CLIENT ID for initialization
-                clientId: WEB_CLIENT_ID_FOR_NATIVE_INIT
+                clientId: WEB_CLIENT_ID_FOR_VERIFICATION
             }
         });
     } catch (e) {
+        // This catch is common if the app is already initialized, so we log it as a warning.
         console.warn("Capgo Initialization failed, attempting login directly (may be normal if already initialized):", e);
     }
     
@@ -327,7 +329,7 @@
       console.error('Native Google sign-in error:', err);
       // Check for user cancellation to avoid alarming error messages
       if (err.message && !err.message.includes('cancelled')) {
-        showCustomAlert('Native Google sign-in failed. Please ensure your Capacitor setup and Android Client ID on the server are correct.', 'danger');
+        showCustomAlert('Native Google sign-in failed. Please ensure your Capacitor setup is correct.', 'danger');
       } else {
         showCustomAlert('Google Sign-In cancelled.', 'info');
       }
@@ -342,6 +344,11 @@
     const emailInput = document.getElementById("email");
     const googleBtn = document.getElementById("googleSignInButton"); 
     
+    // 💡 Added check for Google Sign-In Configuration Error
+    if (getCurrentOrigin() !== 'https://www.winjob.in') {
+        console.warn(`Current origin (${getCurrentOrigin()}) differs from expected production origin. Check your Google Cloud Console Authorized JavaScript Origins.`);
+    }
+
     if (googleBtn) {
         googleBtn.addEventListener("click", initiateGoogleLogin);
     } else {
@@ -394,16 +401,17 @@
       }
 
       try {
-        // NOTE: No 'credentials: "include"' is used here for mobile flow
+        // MODIFIED: Removed credentials: 'include'.
         const res = await fetch("https://www.winjob.in/api/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password }),
+          // Removed: credentials: "include", 
         });
 
         const result = await res.json();
         if (res.ok) {
-          // Check for and store token in localStorage (for mobile/API use)
+          // MODIFIED: Check for and store token in localStorage (for mobile/API use)
           const token = result.token;
           if (token) {
               localStorage.setItem('jwt', token); // Store token
